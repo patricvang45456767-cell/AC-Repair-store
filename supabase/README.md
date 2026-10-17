@@ -10,6 +10,7 @@ The files in `supabase/migrations` mirror the four migrations already applied to
 - `20261017204503_ac_repair_security_and_indexes.sql`
 - `20261017204516_ac_repair_api_access.sql`
 - `20261017204738_ac_repair_app_integration.sql`
+- `20261017205146_ac_repair_seed_service_catalog.sql`
 
 The public schema includes service catalog, bookings, contact messages, site content, gallery items, and testimonials. `private.admin_users` holds explicit admin assignments. Customer booking rows cannot be read through the public client; only approved admins can read or update them.
 
