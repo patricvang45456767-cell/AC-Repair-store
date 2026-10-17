@@ -24,36 +24,9 @@ const ai = new GoogleGenAI({
   },
 });
 
-// Configurable Site Settings
-let siteSettings = {
-  businessName: 'ABC Air Care',
-  tagline: 'Master AC Repair, Servicing & Precision HVAC Diagnostics',
-  description: 'Certified HVAC technicians delivering honest on-site inspection, high-pressure jet cleaning, refrigerant leak isolation, and PCB board repairs with upfront pricing.',
-  phoneDisplay: '0346 3902834',
-  phoneE164: '+923463902834',
-  whatsappE164: '+923463902834',
-  whatsappPrefill: 'Assalam o Alaikum ABC Air Care, mujhe AC inspection aur repair service chahiye.',
-  email: 'service@abcaircare.com',
-  address: 'Shop 14, Commercial Plaza, Main Boulevard, Lahore',
-  showAddress: true,
-  openingHours: 'Mon - Sun: 8:00 AM - 9:00 PM (Emergency breakdown support available)',
-  pricePolicy: 'Inspection-based transparent estimate. A standard nominal visit/diagnostic fee applies, which is adjusted into the final invoice upon approved service.',
-  serviceAreas: [
-    'DHA (Phase 1 to 9)',
-    'Gulberg (I, II, III, IV)',
-    'Johar Town',
-    'Model Town',
-    'Bahria Town',
-    'WAPDA Town',
-    'Cantt & Cavalry Ground',
-    'Faisal Town & Garden Town',
-    'Valencia & Lake City',
-    'Askari (1 to 11)',
-  ],
-  emergencyEnabled: true,
-};
-
 // --- API ROUTES ---
+
+
 
 // 1. AI High-Thinking Diagnostic Assistant
 // Uses gemini-4-argon with thinkingLevel: ThinkingLevel.HIGH as mandated in user prompt
