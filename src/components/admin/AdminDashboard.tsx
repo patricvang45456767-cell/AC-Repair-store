@@ -26,6 +26,7 @@ import {
 import { ServiceRequest, SiteSettings } from '../../types';
 import { fetchAdminRequests, updateRequestStatus, addRequestNote, saveSiteSettings } from '../../lib/api';
 import { formatDate, timeAgo, getStatusDetails, createTelUrl, createWhatsAppUrl } from '../../lib/utils';
+import { supabase } from '../../lib/supabase';
 
 interface AdminDashboardProps {
   isOpen: boolean;
@@ -40,11 +41,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   settings,
   onUpdateSettings,
 }) => {
-  // Auth state
+  // Supabase email/password authentication; administrator permissions are checked in Postgres.
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [email, setEmail] = useState('admin@abcaircare.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
 
   // Dashboard state
   const [activeTab, setActiveTab] = useState<'requests' | 'settings'>('requests');
@@ -97,6 +99,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   useEffect(() => {
+    let active = true;
+    if (!isOpen) {
+      setIsAuthenticated(false);
+      return () => { active = false; };
+    }
+
+    (async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!active || !sessionData.session) return;
+      const { data: isAdmin, error } = await supabase.rpc('is_current_user_admin');
+      if (active && !error && isAdmin === true) {
+        setIsAuthenticated(true);
+      }
+    })();
+
+    return () => { active = false; };
+  }, [isOpen]);
+
+  useEffect(() => {
     if (isAuthenticated && isOpen) {
       loadRequests();
     }
@@ -104,14 +125,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   if (!isOpen) return null;
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'admin123' || password.length >= 4) {
+    setLoginError('');
+    setAuthLoading(true);
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      if (signInError) throw signInError;
+
+      const { data: isAdmin, error: roleError } = await supabase.rpc('is_current_user_admin');
+      if (roleError || isAdmin !== true) {
+        await supabase.auth.signOut();
+        throw new Error('Is account ko admin access assign nahi hua. Pehle admin account register karwana hoga.');
+      }
+
       setIsAuthenticated(true);
+      setPassword('');
       setLoginError('');
-    } else {
-      setLoginError('Invalid credentials. (Hint: Use password "admin123" for testing)');
+    } catch (error) {
+      setLoginError(error instanceof Error ? error.message : 'Login failed. Email aur password check karein.');
+    } finally {
+      setAuthLoading(false);
     }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsAuthenticated(false);
+    setPassword('');
+    setLoginError('');
   };
 
   const handleStatusChange = async (newStatus: string) => {
@@ -199,6 +244,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <SettingsIcon className="w-3.5 h-3.5" />
                   <span>Shop Settings</span>
                 </button>
+                <button
+                  onClick={handleLogout}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:text-white flex items-center gap-1.5 cursor-pointer"
+                  title="Sign out"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Sign Out</span>
+                </button>
               </div>
             )}
 
@@ -237,6 +290,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <label className="block text-xs font-bold text-slate-300 mb-1">Email Address</label>
                   <input
                     type="email"
+                    autoComplete="username"
+                    required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500"
@@ -247,32 +302,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <label className="block text-xs font-bold text-slate-300 mb-1">Password</label>
                   <input
                     type="password"
+                    autoComplete="current-password"
+                    required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500"
                   />
                 </div>
 
-                <div className="p-2.5 bg-slate-900/60 rounded-xl border border-slate-700/60 text-[11px] text-slate-400 flex items-center justify-between">
-                  <span>Demo access credentials ready</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEmail('admin@apexaircare.com');
-                      setPassword('admin123');
-                      setIsAuthenticated(true);
-                    }}
-                    className="text-cyan-400 font-bold hover:underline cursor-pointer"
-                  >
-                    1-Click Demo Login
-                  </button>
-                </div>
+                <p className="text-[11px] leading-relaxed text-slate-400">
+                  Sirf Supabase Auth ke us account ko access milega jise database mein admin role assign hua ho. Public registration se admin access nahi milta.
+                </p>
 
                 <button
                   type="submit"
-                  className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-sm transition-all shadow-md cursor-pointer"
+                  disabled={authLoading}
+                  className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-60 text-white font-bold rounded-xl text-sm transition-all shadow-md cursor-pointer"
                 >
-                  Sign In to Dashboard
+                  {authLoading ? 'Verifying…' : 'Sign In to Dashboard'}
                 </button>
               </form>
             </div>

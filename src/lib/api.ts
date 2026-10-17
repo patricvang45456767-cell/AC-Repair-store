@@ -1,5 +1,6 @@
 import { ServiceRequest, SiteSettings } from '../types';
 import { initialSiteSettings } from '../data/mockData';
+import { supabase } from './supabase';
 
 export interface SubmitRequestPayload {
   customerName: string;
@@ -26,238 +27,266 @@ export interface DiagnosePayload {
   notes?: string;
 }
 
-// 1. Submit Service Request
+type BookingRow = {
+  id: string;
+  ref_code: string;
+  customer_name: string;
+  customer_phone: string;
+  service_slug: string;
+  service_name: string;
+  area_text: string;
+  ac_type: ServiceRequest['acType'];
+  brand_model: string;
+  problem_description: string;
+  preferred_date: string | null;
+  preferred_time_window: ServiceRequest['preferredTimeWindow'];
+  additional_notes: string | null;
+  status: ServiceRequest['status'];
+  contacted_at: string | null;
+  created_at: string;
+  updated_at: string;
+  notes: ServiceRequest['notes'];
+  status_history: ServiceRequest['statusHistory'];
+};
+
+function toServiceRequest(row: BookingRow): ServiceRequest {
+  return {
+    id: row.id,
+    refCode: row.ref_code,
+    customerName: row.customer_name,
+    customerPhone: row.customer_phone,
+    serviceId: row.service_slug,
+    serviceLabel: row.service_name,
+    areaText: row.area_text,
+    acType: row.ac_type,
+    brandModel: row.brand_model,
+    problemDescription: row.problem_description,
+    preferredDate: row.preferred_date || undefined,
+    preferredTimeWindow: row.preferred_time_window || 'anytime',
+    additionalNotes: row.additional_notes || undefined,
+    status: row.status,
+    contactedAt: row.contacted_at || undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    notes: row.notes || [],
+    statusHistory: row.status_history || [],
+  };
+}
+
+function newReferenceCode(): string {
+  const randomPart = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase()
+    : Math.random().toString(36).slice(2, 10).toUpperCase();
+  return `SR-${randomPart}`;
+}
+
+// 1. Submit a service request. Public database policy only permits a new request;
+// all reads and administrative fields are denied to visitors by RLS.
 export async function submitServiceRequest(payload: SubmitRequestPayload): Promise<{
   success: boolean;
   refCode: string;
   message: string;
   data?: ServiceRequest;
 }> {
-  try {
-    const res = await fetch('/api/requests', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Submission failed' }));
-      throw new Error(err.error || 'Server error while submitting request.');
-    }
-
-    return await res.json();
-  } catch (error: any) {
-    // Graceful offline fallback: persist to localStorage so user request is never lost
-    console.warn('API submission failed, using local offline persistence:', error);
-    const randomRef = `SR-${Math.floor(10000 + Math.random() * 90000)}`;
-    const now = new Date().toISOString();
-    const fallbackItem: ServiceRequest = {
-      id: `local-${Date.now()}`,
-      refCode: randomRef,
-      customerName: payload.customerName,
-      customerPhone: payload.customerPhone,
-      serviceId: payload.serviceId || 'general-inquiry',
-      serviceLabel: payload.serviceLabel || 'AC Inspection / Service',
-      areaText: payload.areaText,
-      acType: (payload.acType as any) || 'not_sure',
-      brandModel: payload.brandModel || 'Unspecified',
-      problemDescription: payload.problemDescription,
-      preferredDate: payload.preferredDate,
-      preferredTimeWindow: (payload.preferredTimeWindow as any) || 'anytime',
-      additionalNotes: payload.additionalNotes,
-      status: 'new',
-      createdAt: now,
-      updatedAt: now,
-      notes: [{ id: `n-${Date.now()}`, text: 'Submitted online (stored locally).', author: 'System', createdAt: now }],
-      statusHistory: [{ from: 'none', to: 'new', changedAt: now, changedBy: 'Form' }],
-    };
-
-    try {
-      const stored = JSON.parse(localStorage.getItem('apex_local_requests') || '[]');
-      stored.unshift(fallbackItem);
-      localStorage.setItem('apex_local_requests', JSON.stringify(stored));
-    } catch (e) {
-      // storage unavailable
-    }
-
-    return {
-      success: true,
-      refCode: randomRef,
-      message: 'Request received — our team will contact you shortly to confirm details and visit schedule.',
-      data: fallbackItem,
-    };
+  if (payload.honeypot) {
+    throw new Error('Invalid submission.');
   }
+  if (!payload.consentGiven) {
+    throw new Error('Please confirm that our dispatcher may contact you.');
+  }
+
+  const refCode = newReferenceCode();
+  const now = new Date().toISOString();
+  const serviceId = payload.serviceId || 'general-inquiry';
+  const serviceLabel = payload.serviceLabel || 'AC Inspection / Service';
+  const acType = (payload.acType || 'not_sure') as ServiceRequest['acType'];
+  const timeWindow = (payload.preferredTimeWindow || 'anytime') as NonNullable<ServiceRequest['preferredTimeWindow']>;
+
+  const { error } = await supabase.from('service_bookings').insert({
+    ref_code: refCode,
+    customer_name: payload.customerName.trim(),
+    customer_phone: payload.customerPhone.trim(),
+    service_slug: serviceId,
+    service_name: serviceLabel,
+    area_text: payload.areaText.trim(),
+    ac_type: acType,
+    brand_model: payload.brandModel?.trim() || 'Unspecified',
+    problem_description: payload.problemDescription.trim(),
+    preferred_date: payload.preferredDate || null,
+    preferred_time_window: timeWindow,
+    additional_notes: payload.additionalNotes?.trim() || null,
+    status: 'new',
+    admin_notes: null,
+    contacted_at: null,
+    notes: [],
+    status_history: [],
+  });
+
+  if (error) {
+    console.error('Service request submission failed:', error.message);
+    throw new Error('Request submit nahi ho saki. Baraye meharbani dobara koshish karein ya humein call karein.');
+  }
+
+  const data: ServiceRequest = {
+    id: refCode,
+    refCode,
+    customerName: payload.customerName.trim(),
+    customerPhone: payload.customerPhone.trim(),
+    serviceId,
+    serviceLabel,
+    areaText: payload.areaText.trim(),
+    acType,
+    brandModel: payload.brandModel?.trim() || 'Unspecified',
+    problemDescription: payload.problemDescription.trim(),
+    preferredDate: payload.preferredDate,
+    preferredTimeWindow: timeWindow,
+    additionalNotes: payload.additionalNotes?.trim() || undefined,
+    status: 'new',
+    createdAt: now,
+    updatedAt: now,
+    notes: [],
+    statusHistory: [],
+  };
+
+  return {
+    success: true,
+    refCode,
+    message: 'Request received — our team will contact you shortly to confirm details and visit schedule.',
+    data,
+  };
 }
 
-// 2. Fetch Requests for Admin
+// 2. Fetch service requests. RLS additionally ensures only assigned admins can read rows.
 export async function fetchAdminRequests(status = 'all', search = ''): Promise<{
   success: boolean;
   data: ServiceRequest[];
   total: number;
   counts: Record<string, number>;
 }> {
-  try {
-    const params = new URLSearchParams();
-    if (status !== 'all') params.append('status', status);
-    if (search) params.append('search', search);
+  let query = supabase.from('service_bookings').select('*').order('created_at', { ascending: false });
+  if (status !== 'all') query = query.eq('status', status);
 
-    const res = await fetch(`/api/requests?${params.toString()}`);
-    if (!res.ok) throw new Error('Failed to load requests');
-    const result = await res.json();
+  const { data: rows, error } = await query;
+  if (error) throw new Error('Requests load nahi ho sakin. Confirm karein ke aapka account admin ke taur par assign hai.');
 
-    // Also merge any local fallback items if exists
-    try {
-      const localItems: ServiceRequest[] = JSON.parse(localStorage.getItem('apex_local_requests') || '[]');
-      if (localItems.length > 0) {
-        const ids = new Set(result.data.map((r: ServiceRequest) => r.id));
-        const missing = localItems.filter((item) => !ids.has(item.id));
-        result.data = [...missing, ...result.data];
-      }
-    } catch {}
-
-    return result;
-  } catch (error) {
-    // Load local storage fallback
-    const localItems: ServiceRequest[] = JSON.parse(localStorage.getItem('apex_local_requests') || '[]');
-    return {
-      success: true,
-      data: localItems,
-      total: localItems.length,
-      counts: {
-        all: localItems.length,
-        new: localItems.filter((i) => i.status === 'new').length,
-        contacted: localItems.filter((i) => i.status === 'contacted').length,
-        scheduled: localItems.filter((i) => i.status === 'scheduled').length,
-        in_progress: localItems.filter((i) => i.status === 'in_progress').length,
-        completed: localItems.filter((i) => i.status === 'completed').length,
-        cancelled: localItems.filter((i) => i.status === 'cancelled').length,
-        unable_to_serve: localItems.filter((i) => i.status === 'unable_to_serve').length,
-      },
-    };
+  let data = ((rows || []) as BookingRow[]).map(toServiceRequest);
+  if (search.trim()) {
+    const q = search.toLowerCase();
+    data = data.filter((r) =>
+      r.customerName.toLowerCase().includes(q) ||
+      r.customerPhone.includes(q) ||
+      r.refCode.toLowerCase().includes(q) ||
+      r.areaText.toLowerCase().includes(q)
+    );
   }
+
+  const all = ((await supabase.from('service_bookings').select('status')).data || []) as Array<{status: ServiceRequest['status']}>;
+  const counts: Record<string, number> = { all: all.length };
+  for (const item of all) counts[item.status] = (counts[item.status] || 0) + 1;
+
+  return { success: true, data, total: data.length, counts };
 }
 
-// 3. Update Status
+// 3. Update status and append a server-backed status-history entry.
 export async function updateRequestStatus(
   id: string,
   newStatus: string,
   authorNote?: string
 ): Promise<{ success: boolean; data?: ServiceRequest }> {
-  try {
-    const res = await fetch(`/api/requests/${id}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ newStatus, authorNote }),
-    });
-    if (!res.ok) throw new Error('Failed to update status');
-    return await res.json();
-  } catch (err) {
-    // update local storage
-    try {
-      const stored: ServiceRequest[] = JSON.parse(localStorage.getItem('apex_local_requests') || '[]');
-      const item = stored.find((r) => r.id === id);
-      if (item) {
-        item.status = newStatus as any;
-        item.updatedAt = new Date().toISOString();
-        if (authorNote) {
-          item.notes.push({
-            id: `n-${Date.now()}`,
-            text: authorNote,
-            author: 'Admin Dispatcher',
-            createdAt: new Date().toISOString(),
-          });
-        }
-        localStorage.setItem('apex_local_requests', JSON.stringify(stored));
-        return { success: true, data: item };
-      }
-    } catch {}
-    return { success: false };
+  const validStatuses: ServiceRequest['status'][] = [
+    'new', 'contacted', 'scheduled', 'in_progress', 'completed', 'cancelled', 'unable_to_serve',
+  ];
+  if (!validStatuses.includes(newStatus as ServiceRequest['status'])) {
+    throw new Error('Invalid status.');
   }
+
+  const { data: current, error: readError } = await supabase
+    .from('service_bookings').select('*').eq('id', id).single();
+  if (readError || !current) throw new Error('Request nahi mil saki ya admin permission nahi hai.');
+
+  const row = current as BookingRow;
+  const now = new Date().toISOString();
+  const nextStatus = newStatus as ServiceRequest['status'];
+  const notes = [...(row.notes || [])];
+  if (authorNote?.trim()) {
+    notes.push({ id: crypto.randomUUID(), text: authorNote.trim(), author: 'Admin Dispatcher', createdAt: now });
+  }
+  const statusHistory = [...(row.status_history || []), {
+    from: row.status,
+    to: nextStatus,
+    changedAt: now,
+    changedBy: 'Admin Dispatcher',
+  }];
+
+  const { data, error } = await supabase.from('service_bookings').update({
+    status: nextStatus,
+    contacted_at: nextStatus === 'contacted' ? (row.contacted_at || now) : row.contacted_at,
+    notes,
+    status_history: statusHistory,
+  }).eq('id', id).select('*').single();
+
+  if (error || !data) throw new Error('Request status update nahi ho saka.');
+  return { success: true, data: toServiceRequest(data as BookingRow) };
 }
 
-// 4. Add Technician Note
+// 4. Add an internal technician note.
 export async function addRequestNote(
   id: string,
   note: string,
   author = 'Admin'
-): Promise<{ success: boolean; data?: any }> {
-  try {
-    const res = await fetch(`/api/requests/${id}/notes`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ note, author }),
-    });
-    if (!res.ok) throw new Error('Failed to add note');
-    return await res.json();
-  } catch (err) {
-    return { success: false };
-  }
+): Promise<{ success: boolean; data?: unknown }> {
+  if (!note.trim()) return { success: false };
+
+  const { data: current, error: readError } = await supabase
+    .from('service_bookings').select('notes').eq('id', id).single();
+  if (readError || !current) return { success: false };
+
+  const entry = { id: crypto.randomUUID(), text: note.trim(), author, createdAt: new Date().toISOString() };
+  const nextNotes = [...(((current.notes || []) as ServiceRequest['notes'])), entry];
+  const { error } = await supabase.from('service_bookings').update({ notes: nextNotes }).eq('id', id);
+  if (error) return { success: false };
+  return { success: true, data: entry };
 }
 
-// 5. Run AI Diagnostic Engine (Thinking Mode)
+// 5. Run the server-side AI diagnostic engine.
 export async function requestAIDiagnosis(payload: DiagnosePayload): Promise<{
   success: boolean;
   diagnosis: string;
   error?: string;
 }> {
-  try {
-    const res = await fetch('/api/gemini/diagnose', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({ error: 'Diagnostic request failed' }));
-      throw new Error(data.error || 'Server error in diagnostic');
-    }
-
-    return await res.json();
-  } catch (err: any) {
-    console.warn('AI Diagnostic service fallback:', err);
-    // Reliable, informative technician analysis fallback
-    return {
-      success: true,
-      diagnosis: `### Preliminary Diagnostic Assessment: ${payload.symptom || 'Cooling Issue'}
-
-**1. Most Probable Causes:**
-- **Refrigerant Micro-Leak (R410A / R32):** Loss of pressure prevents heat absorption in the indoor coil, leading to warm vent discharge and frost on the thin suction line.
-- **Degraded Dual Run Capacitor (or IPM Inverter Board Overheat):** Compressor fails to spin up under thermal compression load.
-- **Dust Choked Condenser Heat Exchanger:** High condensing pressure trips thermal overload protection.
-
-**2. Immediate Safety Instructions:**
-- Turn off the main AC isolator switch to prevent compressor burnout.
-- Check and clean the nylon mesh air filters under running water.
-
-**3. Recommended Technician Action:**
-- High-pressure nitrogen test (350 PSI) & flare nut re-torquing.
-- Electronic leak detector inspection on indoor U-bends.
-- High-pressure master jet wash with coil degreaser.`,
-    };
-  }
+  const res = await fetch('/api/gemini/diagnose', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Diagnostic request failed.');
+  return data;
 }
 
-// 6. Settings
+// 6. Public site settings live in the site_content table.
 export async function fetchSiteSettings(): Promise<SiteSettings> {
-  try {
-    const res = await fetch('/api/settings');
-    if (!res.ok) throw new Error('Settings fetch failed');
-    const data = await res.json();
-    return data.data;
-  } catch {
-    return initialSiteSettings;
-  }
+  const { data, error } = await supabase
+    .from('site_content')
+    .select('setting_value')
+    .eq('setting_key', 'site_settings')
+    .eq('is_public', true)
+    .maybeSingle();
+
+  if (error || !data?.setting_value) return initialSiteSettings;
+  return { ...initialSiteSettings, ...(data.setting_value as Partial<SiteSettings>) };
 }
 
 export async function saveSiteSettings(settings: SiteSettings): Promise<boolean> {
-  try {
-    const res = await fetch('/api/settings', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings),
-    });
-    return res.ok;
-  } catch {
+  const { error } = await supabase.from('site_content').upsert({
+    setting_key: 'site_settings',
+    setting_value: settings,
+    is_public: true,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'setting_key' });
+  if (error) {
+    console.error('Could not save site settings:', error.message);
     return false;
   }
+  return true;
 }

@@ -1,0 +1,32 @@
+insert into public.service_catalog
+  (slug, name, short_description, description, icon, display_order, is_active)
+values
+  ('ac-cooling-issue', 'AC Not Cooling / Gas Leak Detection & Refill',
+   'Comprehensive manifold pressure testing, nitrogen leak isolation, flare joint repair, and pure R410A/R32 charging.',
+   'When an AC stops cooling, ABC Air Care uses electronic leak detectors and dry-nitrogen pressure tests to find potential leaks before evacuation and refrigerant charging.',
+   'Snowflake', 1, true),
+  ('ac-general-service', 'Deep Master Jet Wash & Chemical Servicing',
+   'Industrial pressure jet cleaning of indoor blower wheel, drainage tray, and outdoor condenser coils with chemical degreaser.',
+   'Deep cleaning service for blower wheel, evaporator and condenser coils, drainage tray, and airflow paths.',
+   'Sparkles', 2, true),
+  ('ac-water-leakage', 'Water Dripping & Drainage Blockage Repair',
+   'Eliminating indoor unit water leaks, clearing condensate sludge, repairing cracked drain pans, and correcting pipe slopes.',
+   'Troubleshoot indoor water dripping, blocked drain channels, pan leaks, and pipe insulation problems.',
+   'Droplets', 3, true),
+  ('inverter-pcb-repair', 'Inverter PCB Board & Error Code Diagnostics',
+   'Component-level repair of inverter IPM modules, microcontrollers, communication lines, and optical isolators for all brands.',
+   'Diagnose inverter electronics, error codes, power modules, sensor circuits, and communication faults.',
+   'Cpu', 4, true),
+  ('ac-installation', 'Precision AC Installation & Copper Piping',
+   'Factory-spec mounting with heavy-gauge pure copper tubing, vibration isolators, and deep vacuuming before first run.',
+   'AC installation and relocation support with level mounting, suitable copper piping, vacuuming, and operation checks.',
+   'Wrench', 5, true),
+  ('ac-uninstallation', 'Safe AC Uninstallation & Gas Pump-Down',
+   'Professional refrigerant recapture into the outdoor unit without gas loss, safe dismantling, and pipe capping.',
+   'Uninstall and prepare AC equipment for relocation, including refrigerant pump-down and safe line sealing where supported by the unit.',
+   'ArrowDownCircle', 6, true),
+  ('commercial-hvac', 'Commercial VRF / Cassette & Office AC Care',
+   'Scheduled maintenance contracts for corporate offices, retail showrooms, restaurants, and medical clinics.',
+   'Commercial HVAC maintenance, preventative visits, cleaning, refrigerant health checks, and priority dispatch planning.',
+   'Building2', 7, true)
+on conflict (slug) do nothing;
