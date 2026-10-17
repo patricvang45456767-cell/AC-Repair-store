@@ -1,0 +1,6 @@
+{
+  "name": "Apex Air Care | AC Repair & Maintenance",
+  "description": "Professional AC repair, installation, gas leak charging, and maintenance services with certified technicians and transparent inspection.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
