@@ -311,7 +311,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
 
                 <p className="text-[11px] leading-relaxed text-slate-400">
-                  Sirf Supabase Auth ke authorized admin accounts login kar sakte hain. Demo password ya public signup enabled nahi hai.
+                  Sirf Supabase Auth ke us account ko access milega jise database mein admin role assign hua ho. Public registration se admin access nahi milta.
                 </p>
 
                 <button
