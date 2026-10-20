@@ -1,5 +1,6 @@
 import { ServiceRequest, SiteSettings } from '../types';
 import { initialSiteSettings } from '../data/mockData';
+import { rest, rpc, signInWithPassword, signOut, hasStoredSession, getSessionEmail, SupabaseError } from './supabase';
 
 export interface SubmitRequestPayload {
   customerName: string;
@@ -26,68 +27,90 @@ export interface DiagnosePayload {
   notes?: string;
 }
 
-// 1. Submit Service Request
+// Strip the machine-readable prefix ("validation_failed: ...") from database error messages.
+function friendlyDbMessage(err: unknown, fallback: string): string {
+  const raw = err instanceof Error ? err.message : '';
+  const m = raw.match(/^(?:validation_failed|rate_limited):\s*(.+)$/);
+  return m ? m[1] : fallback;
+}
+
+function mapBooking(row: any): ServiceRequest {
+  return {
+    id: row.id,
+    refCode: row.ref_code || '',
+    customerName: row.customer_name,
+    customerPhone: row.customer_phone,
+    serviceId: row.service_slug,
+    serviceLabel: row.service_name,
+    areaText: row.area_text,
+    acType: row.ac_type,
+    brandModel: row.brand_model,
+    problemDescription: row.problem_description || '',
+    preferredDate: row.preferred_date || undefined,
+    preferredTimeWindow: row.preferred_time_window,
+    additionalNotes: row.additional_notes || undefined,
+    status: row.status,
+    contactedAt: row.contacted_at || undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    notes: Array.isArray(row.notes) ? row.notes : [],
+    statusHistory: Array.isArray(row.status_history) ? row.status_history : [],
+  };
+}
+
+// 1. Submit Service Request (public). Throws on failure so the UI shows an honest error;
+// a request is never reported as received unless the database stored it.
 export async function submitServiceRequest(payload: SubmitRequestPayload): Promise<{
   success: boolean;
   refCode: string;
   message: string;
-  data?: ServiceRequest;
 }> {
   try {
-    const res = await fetch('/api/requests', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Submission failed' }));
-      throw new Error(err.error || 'Server error while submitting request.');
-    }
-
-    return await res.json();
-  } catch (error: any) {
-    // Graceful offline fallback: persist to localStorage so user request is never lost
-    console.warn('API submission failed, using local offline persistence:', error);
-    const randomRef = `SR-${Math.floor(10000 + Math.random() * 90000)}`;
-    const now = new Date().toISOString();
-    const fallbackItem: ServiceRequest = {
-      id: `local-${Date.now()}`,
-      refCode: randomRef,
-      customerName: payload.customerName,
-      customerPhone: payload.customerPhone,
-      serviceId: payload.serviceId || 'general-inquiry',
-      serviceLabel: payload.serviceLabel || 'AC Inspection / Service',
-      areaText: payload.areaText,
-      acType: (payload.acType as any) || 'not_sure',
-      brandModel: payload.brandModel || 'Unspecified',
-      problemDescription: payload.problemDescription,
-      preferredDate: payload.preferredDate,
-      preferredTimeWindow: (payload.preferredTimeWindow as any) || 'anytime',
-      additionalNotes: payload.additionalNotes,
-      status: 'new',
-      createdAt: now,
-      updatedAt: now,
-      notes: [{ id: `n-${Date.now()}`, text: 'Submitted online (stored locally).', author: 'System', createdAt: now }],
-      statusHistory: [{ from: 'none', to: 'new', changedAt: now, changedBy: 'Form' }],
-    };
-
-    try {
-      const stored = JSON.parse(localStorage.getItem('apex_local_requests') || '[]');
-      stored.unshift(fallbackItem);
-      localStorage.setItem('apex_local_requests', JSON.stringify(stored));
-    } catch (e) {
-      // storage unavailable
-    }
-
+    const res = await rpc<{ success: boolean; refCode: string }>('submit_service_request', { payload });
     return {
       success: true,
-      refCode: randomRef,
+      refCode: res.refCode,
       message: 'Request received — our team will contact you shortly to confirm details and visit schedule.',
-      data: fallbackItem,
     };
+  } catch (err) {
+    throw new Error(
+      friendlyDbMessage(err, 'We could not send your request. Please try again or call us directly.')
+    );
   }
 }
+
+// Admin session helpers
+export async function adminSignIn(email: string, password: string): Promise<void> {
+  try {
+    await signInWithPassword(email.trim(), password);
+  } catch (err) {
+    throw new Error(err instanceof SupabaseError && err.status === 400 ? 'Invalid email or password.' : 'Sign-in failed. Please try again.');
+  }
+  let isAdmin = false;
+  try {
+    isAdmin = (await rpc<boolean>('am_i_admin', {}, true)) === true;
+  } catch {
+    isAdmin = false;
+  }
+  if (!isAdmin) {
+    signOut();
+    throw new Error('This account is not authorised for the admin dashboard.');
+  }
+}
+
+export function adminSignOut() {
+  signOut();
+}
+
+export function hasAdminSession(): boolean {
+  return hasStoredSession();
+}
+
+export function adminEmail(): string {
+  return getSessionEmail();
+}
+
+const STATUS_KEYS = ['new', 'contacted', 'scheduled', 'in_progress', 'completed', 'cancelled', 'unable_to_serve'];
 
 // 2. Fetch Requests for Admin
 export async function fetchAdminRequests(status = 'all', search = ''): Promise<{
@@ -96,100 +119,52 @@ export async function fetchAdminRequests(status = 'all', search = ''): Promise<{
   total: number;
   counts: Record<string, number>;
 }> {
-  try {
-    const params = new URLSearchParams();
-    if (status !== 'all') params.append('status', status);
-    if (search) params.append('search', search);
-
-    const res = await fetch(`/api/requests?${params.toString()}`);
-    if (!res.ok) throw new Error('Failed to load requests');
-    const result = await res.json();
-
-    // Also merge any local fallback items if exists
-    try {
-      const localItems: ServiceRequest[] = JSON.parse(localStorage.getItem('apex_local_requests') || '[]');
-      if (localItems.length > 0) {
-        const ids = new Set(result.data.map((r: ServiceRequest) => r.id));
-        const missing = localItems.filter((item) => !ids.has(item.id));
-        result.data = [...missing, ...result.data];
-      }
-    } catch {}
-
-    return result;
-  } catch (error) {
-    // Load local storage fallback
-    const localItems: ServiceRequest[] = JSON.parse(localStorage.getItem('apex_local_requests') || '[]');
-    return {
-      success: true,
-      data: localItems,
-      total: localItems.length,
-      counts: {
-        all: localItems.length,
-        new: localItems.filter((i) => i.status === 'new').length,
-        contacted: localItems.filter((i) => i.status === 'contacted').length,
-        scheduled: localItems.filter((i) => i.status === 'scheduled').length,
-        in_progress: localItems.filter((i) => i.status === 'in_progress').length,
-        completed: localItems.filter((i) => i.status === 'completed').length,
-        cancelled: localItems.filter((i) => i.status === 'cancelled').length,
-        unable_to_serve: localItems.filter((i) => i.status === 'unable_to_serve').length,
-      },
-    };
+  const params = new URLSearchParams();
+  params.set('select', '*');
+  params.set('order', 'created_at.desc');
+  params.set('limit', '500');
+  if (status !== 'all' && STATUS_KEYS.includes(status)) params.set('status', `eq.${status}`);
+  const q = search.trim().replace(/[(),*%\\]/g, ' ').trim();
+  if (q) {
+    const like = `*${q}*`;
+    params.set('or', `(customer_name.ilike.${like},customer_phone.ilike.${like},ref_code.ilike.${like},area_text.ilike.${like})`);
   }
+
+  const [rows, statusRows] = await Promise.all([
+    rest<any[]>(`service_bookings?${params.toString()}`, { auth: true }),
+    rest<Array<{ status: string }>>('service_bookings?select=status&limit=5000', { auth: true }),
+  ]);
+
+  const counts: Record<string, number> = { all: statusRows.length };
+  STATUS_KEYS.forEach((k) => (counts[k] = statusRows.filter((r) => r.status === k).length));
+
+  return { success: true, data: rows.map(mapBooking), total: rows.length, counts };
 }
 
-// 3. Update Status
+// 3. Update Status (admin)
 export async function updateRequestStatus(
   id: string,
   newStatus: string,
   authorNote?: string
 ): Promise<{ success: boolean; data?: ServiceRequest }> {
   try {
-    const res = await fetch(`/api/requests/${id}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ newStatus, authorNote }),
-    });
-    if (!res.ok) throw new Error('Failed to update status');
-    return await res.json();
-  } catch (err) {
-    // update local storage
-    try {
-      const stored: ServiceRequest[] = JSON.parse(localStorage.getItem('apex_local_requests') || '[]');
-      const item = stored.find((r) => r.id === id);
-      if (item) {
-        item.status = newStatus as any;
-        item.updatedAt = new Date().toISOString();
-        if (authorNote) {
-          item.notes.push({
-            id: `n-${Date.now()}`,
-            text: authorNote,
-            author: 'Admin Dispatcher',
-            createdAt: new Date().toISOString(),
-          });
-        }
-        localStorage.setItem('apex_local_requests', JSON.stringify(stored));
-        return { success: true, data: item };
-      }
-    } catch {}
+    const row = await rpc<any>('admin_update_booking_status', { p_id: id, p_status: newStatus, p_note: authorNote ?? null }, true);
+    return { success: true, data: mapBooking(row) };
+  } catch {
     return { success: false };
   }
 }
 
-// 4. Add Technician Note
+// 4. Add Internal Note (admin)
 export async function addRequestNote(
   id: string,
   note: string,
-  author = 'Admin'
+  _author = 'Admin'
 ): Promise<{ success: boolean; data?: any }> {
   try {
-    const res = await fetch(`/api/requests/${id}/notes`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ note, author }),
-    });
-    if (!res.ok) throw new Error('Failed to add note');
-    return await res.json();
-  } catch (err) {
+    const row = await rpc<any>('admin_add_booking_note', { p_id: id, p_note: note }, true);
+    return { success: true, data: mapBooking(row) };
+  } catch {
     return { success: false };
   }
 }
@@ -237,13 +212,14 @@ export async function requestAIDiagnosis(payload: DiagnosePayload): Promise<{
   }
 }
 
-// 6. Settings
+// 6. Settings (stored in public.site_content, key "site_settings")
 export async function fetchSiteSettings(): Promise<SiteSettings> {
   try {
-    const res = await fetch('/api/settings');
-    if (!res.ok) throw new Error('Settings fetch failed');
-    const data = await res.json();
-    return data.data;
+    const rows = await rest<Array<{ setting_value: Partial<SiteSettings> }>>(
+      'site_content?setting_key=eq.site_settings&select=setting_value&limit=1'
+    );
+    const value = rows?.[0]?.setting_value;
+    return value ? { ...initialSiteSettings, ...value } : initialSiteSettings;
   } catch {
     return initialSiteSettings;
   }
@@ -251,12 +227,12 @@ export async function fetchSiteSettings(): Promise<SiteSettings> {
 
 export async function saveSiteSettings(settings: SiteSettings): Promise<boolean> {
   try {
-    const res = await fetch('/api/settings', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings),
+    await rest('site_content?setting_key=eq.site_settings', {
+      method: 'PATCH',
+      auth: true,
+      body: { setting_value: settings, updated_at: new Date().toISOString() },
     });
-    return res.ok;
+    return true;
   } catch {
     return false;
   }

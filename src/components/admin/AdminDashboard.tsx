@@ -24,7 +24,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { ServiceRequest, SiteSettings } from '../../types';
-import { fetchAdminRequests, updateRequestStatus, addRequestNote, saveSiteSettings } from '../../lib/api';
+import { fetchAdminRequests, updateRequestStatus, addRequestNote, saveSiteSettings, adminSignIn, adminSignOut, hasAdminSession } from '../../lib/api';
 import { formatDate, timeAgo, getStatusDetails, createTelUrl, createWhatsAppUrl } from '../../lib/utils';
 
 interface AdminDashboardProps {
@@ -41,10 +41,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onUpdateSettings,
 }) => {
   // Auth state
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [email, setEmail] = useState('admin@abcaircare.com');
-  const [password, setPassword] = useState('admin123');
+  const [isAuthenticated, setIsAuthenticated] = useState(hasAdminSession());
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [loggingIn, setLoggingIn] = useState(false);
 
   // Dashboard state
   const [activeTab, setActiveTab] = useState<'requests' | 'settings'>('requests');
@@ -89,8 +90,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           setSelectedRequest(res.data[0]);
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      if (e?.status === 401 || /session expired/i.test(e?.message || '')) {
+        adminSignOut();
+        setIsAuthenticated(false);
+        setLoginError('Your session expired. Please sign in again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -104,14 +110,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   if (!isOpen) return null;
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'admin123' || password.length >= 4) {
+    setLoggingIn(true);
+    setLoginError('');
+    try {
+      await adminSignIn(email, password);
+      setPassword('');
       setIsAuthenticated(true);
-      setLoginError('');
-    } else {
-      setLoginError('Invalid credentials. (Hint: Use password "admin123" for testing)');
+    } catch (err: any) {
+      setLoginError(err?.message || 'Sign-in failed.');
+    } finally {
+      setLoggingIn(false);
     }
+  };
+
+  const handleLogout = () => {
+    adminSignOut();
+    setIsAuthenticated(false);
+    setRequests([]);
+    setSelectedRequest(null);
   };
 
   const handleStatusChange = async (newStatus: string) => {
@@ -202,6 +220,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             )}
 
+            {isAuthenticated && (
+              <button
+                onClick={handleLogout}
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                title="Sign out"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            )}
+
             <button
               onClick={onClose}
               className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer"
@@ -253,24 +281,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   />
                 </div>
 
-                <div className="p-2.5 bg-slate-900/60 rounded-xl border border-slate-700/60 text-[11px] text-slate-400 flex items-center justify-between">
-                  <span>Demo access credentials ready</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEmail('admin@apexaircare.com');
-                      setPassword('admin123');
-                      setIsAuthenticated(true);
-                    }}
-                    className="text-cyan-400 font-bold hover:underline cursor-pointer"
-                  >
-                    1-Click Demo Login
-                  </button>
-                </div>
-
                 <button
                   type="submit"
-                  className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-sm transition-all shadow-md cursor-pointer"
+                  disabled={loggingIn}
+                  className="w-full py-3 disabled:opacity-60 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-sm transition-all shadow-md cursor-pointer"
                 >
                   Sign In to Dashboard
                 </button>
