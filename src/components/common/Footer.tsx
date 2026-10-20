@@ -49,8 +49,9 @@ export const Footer: React.FC<FooterProps> = ({ settings, language, onOpenBookin
             </h4>
             <ul className="space-y-2 text-xs">
               <li><a href="#services" className="hover:text-cyan-400 transition-colors">{language === 'roman' ? 'Tamam Services' : 'All Services'}</a></li>
+              <li><a href="#3d-lab" className="text-cyan-300 hover:text-cyan-400 transition-colors font-bold">{language === 'roman' ? '3D Inverter X-Ray Lab' : '3D Inverter Hologram Lab'}</a></li>
+              <li><a href="#videos" className="hover:text-cyan-400 transition-colors">{language === 'roman' ? 'Service Video Ads' : 'Service Video Ads'}</a></li>
               <li><a href="#ai-diagnosis" className="hover:text-cyan-400 transition-colors">{language === 'roman' ? 'AI Tashkhees' : 'AI Fault Diagnosis'}</a></li>
-              <li><a href="#process" className="hover:text-cyan-400 transition-colors">{language === 'roman' ? 'Hamara 4-Step Tareeqa' : 'Our 4-Step Process'}</a></li>
               <li><a href="#pricing" className="hover:text-cyan-400 transition-colors">{language === 'roman' ? 'Rates & Policy' : 'Pricing & Policy'}</a></li>
               <li><a href="#coverage" className="hover:text-cyan-400 transition-colors">{language === 'roman' ? 'Service Areas' : 'Service Areas'}</a></li>
               <li><a href="#faqs" className="hover:text-cyan-400 transition-colors">{language === 'roman' ? 'Ahem Sawalat (FAQs)' : 'Helpful FAQs'}</a></li>
@@ -122,10 +123,10 @@ export const Footer: React.FC<FooterProps> = ({ settings, language, onOpenBookin
           </div>
           <button
             onClick={scrollToTop}
-            className="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors"
+            className="btn-animated flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors cursor-pointer group px-3 py-1.5 rounded-lg hover:bg-slate-900 border border-transparent hover:border-slate-800"
           >
             <span>{language === 'roman' ? 'Wapis Upar' : 'Back to top'}</span>
-            <ArrowUp className="w-3.5 h-3.5" />
+            <ArrowUp className="w-3.5 h-3.5 group-hover:-translate-y-1 transition-transform text-cyan-400" />
           </button>
         </div>
       </div>

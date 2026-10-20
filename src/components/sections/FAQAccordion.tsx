@@ -4,6 +4,7 @@ import { faqsData } from '../../data/mockData';
 import { SiteSettings } from '../../types';
 import { Language } from '../../data/translations';
 import { createTelUrl, createWhatsAppUrl } from '../../lib/utils';
+import { ScrollReveal } from '../common/ScrollReveal';
 
 interface FAQAccordionProps {
   settings: SiteSettings;
@@ -57,82 +58,88 @@ export const FAQAccordion: React.FC<FAQAccordionProps> = ({ settings, language }
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-800 text-xs font-bold uppercase tracking-wider mb-3">
-            <HelpCircle className="w-3.5 h-3.5 text-cyan-600" />
-            <span>{language === 'roman' ? 'Ahem Sawalat' : 'Got Questions?'}</span>
-          </div>
-          <h2 className="text-3xl font-extrabold text-slate-900 font-display">
-            {language === 'roman' ? 'Frequently Asked Questions (Ahem Sawalat)' : 'Frequently Asked Questions'}
-          </h2>
-          <p className="mt-2 text-slate-600 text-xs sm:text-sm">
-            {language === 'roman'
-              ? 'Gas leakage, inspection fee, inverter motherboards aur warranty k baray me shaffaf jawabat.'
-              : 'Honest answers about refrigerant myths, inspection policies, inverter repairs, and warranties.'}
-          </p>
-        </div>
-
-        {/* Accordion List */}
-        <div className="space-y-3">
-          {currentFaqs.map((faq) => {
-            const isOpen = openId === faq.id;
-            return (
-              <div
-                key={faq.id}
-                className="border border-slate-200 rounded-2xl overflow-hidden transition-all duration-200"
-              >
-                <button
-                  onClick={() => toggle(faq.id)}
-                  className="w-full text-left p-5 flex items-center justify-between gap-4 bg-white hover:bg-slate-50 transition-colors cursor-pointer"
-                  aria-expanded={isOpen}
-                >
-                  <span className="font-bold text-sm sm:text-base text-slate-900">
-                    {faq.question}
-                  </span>
-                  <div className={`p-1.5 rounded-full bg-slate-100 text-slate-500 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180 bg-cyan-100 text-cyan-700' : ''}`}>
-                    <ChevronDown className="w-4 h-4" />
-                  </div>
-                </button>
-
-                {isOpen && (
-                  <div className="px-5 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3 bg-slate-50/50">
-                    {faq.answer}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Bottom Help Callout */}
-        <div className="mt-10 p-6 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <h4 className="font-bold text-sm text-slate-900">
-              {language === 'roman' ? 'Koi aur sawal ya specific masla hai?' : 'Have a specific fault or question not covered here?'}
-            </h4>
-            <p className="text-xs text-slate-500">
-              {language === 'roman' ? 'Hamare lead technician se direct call ya WhatsApp par baat karein.' : 'Talk directly to our lead technician on call or WhatsApp.'}
+        <ScrollReveal animation="fade-down">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-800 text-xs font-bold uppercase tracking-wider mb-3 animate-float-subtle">
+              <HelpCircle className="w-3.5 h-3.5 text-cyan-600" />
+              <span>{language === 'roman' ? 'Ahem Sawalat' : 'Got Questions?'}</span>
+            </div>
+            <h2 className="text-3xl font-extrabold text-slate-900 font-display">
+              {language === 'roman' ? 'Frequently Asked Questions (Ahem Sawalat)' : 'Frequently Asked Questions'}
+            </h2>
+            <p className="mt-2 text-slate-600 text-xs sm:text-sm">
+              {language === 'roman'
+                ? 'Gas leakage, inspection fee, inverter motherboards aur warranty k baray me shaffaf jawabat.'
+                : 'Honest answers about refrigerant myths, inspection policies, inverter repairs, and warranties.'}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <a
-              href={createTelUrl(settings.phoneE164)}
-              className="px-4 py-2 bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center gap-1.5"
-            >
-              <Phone className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Call: {settings.phoneDisplay}</span>
-            </a>
-            <a
-              href={createWhatsAppUrl(settings.whatsappE164, settings.whatsappPrefill)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5"
-            >
-              <MessageSquare className="w-3.5 h-3.5 fill-white" />
-              <span>WhatsApp</span>
-            </a>
+        </ScrollReveal>
+
+        {/* Accordion List with ScrollReveal */}
+        <ScrollReveal animation="fade-up" delay={100}>
+          <div className="space-y-3">
+            {currentFaqs.map((faq) => {
+              const isOpen = openId === faq.id;
+              return (
+                <div
+                  key={faq.id}
+                  className="border border-slate-200 rounded-2xl overflow-hidden transition-all duration-200 card-interactive bg-white"
+                >
+                  <button
+                    onClick={() => toggle(faq.id)}
+                    className="w-full text-left p-5 flex items-center justify-between gap-4 bg-white hover:bg-slate-50 transition-colors cursor-pointer group btn-animated"
+                    aria-expanded={isOpen}
+                  >
+                    <span className="font-bold text-sm sm:text-base text-slate-900 group-hover:text-cyan-600 transition-colors">
+                      {faq.question}
+                    </span>
+                    <div className={`p-1.5 rounded-full bg-slate-100 text-slate-500 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180 bg-cyan-100 text-cyan-700' : ''}`}>
+                      <ChevronDown className="w-4 h-4" />
+                    </div>
+                  </button>
+
+                  {isOpen && (
+                    <div className="px-5 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3 bg-slate-50/50 animate-page-entrance">
+                      {faq.answer}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        </div>
+        </ScrollReveal>
+
+        {/* Bottom Help Callout */}
+        <ScrollReveal animation="zoom" delay={200}>
+          <div className="mt-10 p-6 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 card-interactive">
+            <div>
+              <h4 className="font-bold text-sm text-slate-900">
+                {language === 'roman' ? 'Koi aur sawal ya specific masla hai?' : 'Have a specific fault or question not covered here?'}
+              </h4>
+              <p className="text-xs text-slate-500">
+                {language === 'roman' ? 'Hamare lead technician se direct call ya WhatsApp par baat karein.' : 'Talk directly to our lead technician on call or WhatsApp.'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <a
+                href={createTelUrl(settings.phoneE164)}
+                className="btn-animated btn-glow-dark px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 group"
+              >
+                <Phone className="w-3.5 h-3.5 text-cyan-400 group-hover-phone-wobble transition-transform" />
+                <span>Call: {settings.phoneDisplay}</span>
+              </a>
+              <a
+                href={createWhatsAppUrl(settings.whatsappE164, settings.whatsappPrefill)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-animated btn-glow-emerald px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 group"
+              >
+                <MessageSquare className="w-3.5 h-3.5 fill-white group-hover:scale-125 transition-transform" />
+                <span>WhatsApp</span>
+              </a>
+            </div>
+          </div>
+        </ScrollReveal>
 
       </div>
     </section>

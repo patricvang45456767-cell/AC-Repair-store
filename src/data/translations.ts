@@ -16,6 +16,7 @@ export interface TranslationStrings {
   navCoverage: string;
   navGallery: string;
   navVideos: string;
+  nav3d: string;
   navFaqs: string;
   navContact: string;
   btnBookInspection: string;
@@ -129,6 +130,7 @@ export const translations: Record<Language, TranslationStrings> = {
     navCoverage: 'Service Areas',
     navGallery: 'Real Work Gallery',
     navVideos: 'Service Video Ads',
+    nav3d: '3D X-Ray Lab',
     navFaqs: 'Ahem Sawalat',
     navContact: 'Rabta Karein',
     btnBookInspection: 'Technician Book Karein',
@@ -240,6 +242,7 @@ export const translations: Record<Language, TranslationStrings> = {
     navCoverage: 'Coverage Areas',
     navGallery: 'Real Work Gallery',
     navVideos: 'Service Video Ads',
+    nav3d: '3D X-Ray Lab',
     navFaqs: 'FAQs',
     navContact: 'Contact',
     btnBookInspection: 'Book Inspection',

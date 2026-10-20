@@ -2,17 +2,15 @@ import React from 'react';
 import {
   Scale,
   ShieldCheck,
-  CheckCircle2,
   FileText,
   Clock,
   ArrowRight,
-  Phone,
-  HelpCircle,
-  AlertCircle
+  Phone
 } from 'lucide-react';
 import { Language } from '../data/translations';
 import { SiteSettings } from '../types';
 import { createTelUrl } from '../lib/utils';
+import { ScrollReveal } from '../components/common/ScrollReveal';
 
 interface PricingPageProps {
   settings: SiteSettings;
@@ -62,126 +60,138 @@ export const PricingPage: React.FC<PricingPageProps> = ({ settings, language, on
     <div className="py-12 sm:py-16 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         
-        {/* Header */}
-        <div className="text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider mb-3">
-            <Scale className="w-3.5 h-3.5" />
-            <span>{language === 'roman' ? '100% Shaffaf Rate Card' : 'Transparent Pricing Standards'}</span>
+        {/* Header with ScrollReveal fade-down */}
+        <ScrollReveal animation="fade-down">
+          <div className="text-center max-w-3xl mx-auto">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider mb-3 animate-float-subtle">
+              <Scale className="w-3.5 h-3.5" />
+              <span>{language === 'roman' ? '100% Shaffaf Rate Card' : 'Transparent Pricing Standards'}</span>
+            </div>
+            <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 font-display">
+              {language === 'roman' ? 'Upfront Rates & Inspection Policy' : 'Itemized Upfront Pricing Card'}
+            </h1>
+            <p className="mt-3 text-slate-600 text-sm sm:text-base leading-relaxed">
+              {language === 'roman'
+                ? 'Koi chhupe hue kharche ya baad me izafay nahi. Kaam shuru hone se pehle written estimate aur 100% visit fee credit.'
+                : 'Never worry about arbitrary inflated estimates. We provide clear, itemized pricing and adjust our inspection fee into your final invoice.'}
+            </p>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 font-display">
-            {language === 'roman' ? 'Upfront Rates & Inspection Policy' : 'Itemized Upfront Pricing Card'}
-          </h1>
-          <p className="mt-3 text-slate-600 text-sm sm:text-base leading-relaxed">
-            {language === 'roman'
-              ? 'Koi chhupe hue kharche ya baad me izafay nahi. Kaam shuru hone se pehle written estimate aur 100% visit fee credit.'
-              : 'Never worry about arbitrary inflated estimates. We provide clear, itemized pricing and adjust our inspection fee into your final invoice.'}
-          </p>
-        </div>
+        </ScrollReveal>
 
-        {/* 3 Core Guarantee Pillars */}
+        {/* 3 Core Guarantee Pillars with 3D Flip-up Stagger */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <div className="w-10 h-10 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600 mb-4">
-              <FileText className="w-5 h-5" />
+          <ScrollReveal animation="flip-up" delay={50}>
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm card-interactive h-full group">
+              <div className="w-10 h-10 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600 mb-4 group-hover:scale-110 transition-transform">
+                <FileText className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-slate-900 text-base mb-2 group-hover:text-cyan-700 transition-colors">
+                {language === 'roman' ? '100% Visit Fee Discount' : '100% Visit Fee Credit'}
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {language === 'roman'
+                  ? 'Technician ki visit fee (Rs. 1,000 - 1,500) quote approve hone par final repair bill me 100% deduct ho jati hai.'
+                  : 'A nominal transit fee applies for digital gauge diagnostics, which is 100% credited into your final invoice when service is approved.'}
+              </p>
             </div>
-            <h3 className="font-bold text-slate-900 text-base mb-2">
-              {language === 'roman' ? '100% Visit Fee Discount' : '100% Visit Fee Credit'}
-            </h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              {language === 'roman'
-                ? 'Technician ki visit fee (Rs. 1,000 - 1,500) quote approve hone par final repair bill me 100% deduct ho jati hai.'
-                : 'A nominal transit fee applies for digital gauge diagnostics, which is 100% credited into your final invoice when service is approved.'}
-            </p>
-          </div>
+          </ScrollReveal>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 mb-4">
-              <Scale className="w-5 h-5" />
+          <ScrollReveal animation="flip-up" delay={150}>
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm card-interactive h-full group">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 mb-4 group-hover:scale-110 transition-transform">
+                <Scale className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-slate-900 text-base mb-2 group-hover:text-cyan-700 transition-colors">
+                {language === 'roman' ? 'Gas Weight K Hisab Se Charge Hogi' : 'Refrigerant Weighed on Digital Scale'}
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {language === 'roman'
+                  ? 'Hawa me teer chalaye baghair, digital electronic scale par toal kar pure R410A/R32 gas grams me bhari jati hai.'
+                  : 'Never pay for arbitrary top-ups. We weigh exact grams on calibrated digital scales matching your AC factory plate.'}
+              </p>
             </div>
-            <h3 className="font-bold text-slate-900 text-base mb-2">
-              {language === 'roman' ? 'Gas Weight K Hisab Se Charge Hogi' : 'Refrigerant Weighed on Digital Scale'}
-            </h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              {language === 'roman'
-                ? 'Hawa me teer chalaye baghair, digital electronic scale par toal kar pure R410A/R32 gas grams me bhari jati hai.'
-                : 'Never pay for arbitrary top-ups. We weigh exact grams on calibrated digital scales matching your AC factory plate.'}
-            </p>
-          </div>
+          </ScrollReveal>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 mb-4">
-              <ShieldCheck className="w-5 h-5" />
+          <ScrollReveal animation="flip-up" delay={250}>
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm card-interactive h-full group">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 mb-4 group-hover:scale-110 transition-transform">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-slate-900 text-base mb-2 group-hover:text-emerald-700 transition-colors">
+                {language === 'roman' ? '90 Din Ki Written Warranty' : '90-Day Written Service Warranty'}
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {language === 'roman'
+                  ? 'Har repair aur gas charging par written invoice aur 90 din warranty milti hai. Masla aye tou free re-visit.'
+                  : 'Every job is protected by a 90-day written guarantee. If the same issue recurs within 90 days, we fix it with zero extra visit charge.'}
+              </p>
             </div>
-            <h3 className="font-bold text-slate-900 text-base mb-2">
-              {language === 'roman' ? '90 Din Ki Written Warranty' : '90-Day Written Service Warranty'}
-            </h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              {language === 'roman'
-                ? 'Har repair aur gas charging par written invoice aur 90 din warranty milti hai. Masla aye tou free re-visit.'
-                : 'Every job is protected by a 90-day written guarantee. If the same issue recurs within 90 days, we fix it with zero extra visit charge.'}
-            </p>
-          </div>
+          </ScrollReveal>
         </div>
 
-        {/* Pricing Tables */}
+        {/* Pricing Tables with ScrollReveal */}
         <div className="space-y-8">
           {rateCards.map((category, idx) => (
-            <div key={idx} className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-              <div className="p-5 sm:p-6 bg-slate-900 text-white flex items-center justify-between">
-                <h3 className="font-bold text-base sm:text-lg font-display">
-                  {category.category}
-                </h3>
-                <span className="text-xs text-cyan-400 font-semibold">ABC Certified Standard</span>
-              </div>
+            <ScrollReveal key={idx} animation="fade-up" delay={idx * 100}>
+              <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm card-interactive">
+                <div className="p-5 sm:p-6 bg-slate-900 text-white flex items-center justify-between">
+                  <h3 className="font-bold text-base sm:text-lg font-display">
+                    {category.category}
+                  </h3>
+                  <span className="text-xs text-cyan-400 font-semibold">ABC Certified Standard</span>
+                </div>
 
-              <div className="divide-y divide-slate-100">
-                {category.items.map((item, itemIdx) => (
-                  <div key={itemIdx} className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
-                    <div>
-                      <div className="font-bold text-sm text-slate-900">{item.name}</div>
-                      <div className="text-xs text-slate-500 mt-0.5">{item.note}</div>
+                <div className="divide-y divide-slate-100">
+                  {category.items.map((item, itemIdx) => (
+                    <div key={itemIdx} className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors group">
+                      <div>
+                        <div className="font-bold text-sm text-slate-900 group-hover:text-cyan-700 transition-colors">{item.name}</div>
+                        <div className="text-xs text-slate-500 mt-0.5">{item.note}</div>
+                      </div>
+                      <div className="font-extrabold text-sm sm:text-base text-cyan-800 shrink-0">
+                        {item.price}
+                      </div>
                     </div>
-                    <div className="font-extrabold text-sm sm:text-base text-cyan-800 shrink-0">
-                      {item.price}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            </ScrollReveal>
           ))}
         </div>
 
-        {/* Action Callout */}
-        <div className="p-8 bg-slate-900 text-white rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
-          <div>
-            <h3 className="text-xl font-bold font-display">
-              {language === 'roman' ? 'Kya aapko kisi specific kaam ka estimate chahiye?' : 'Need a formal estimate for your office or residence?'}
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-300 mt-1">
-              {language === 'roman'
-                ? 'Call karein: 0346 3902834 ya online inspection visit request submit karein.'
-                : 'Call our hotline: 0346 3902834 or request a technician inspection online.'}
-            </p>
-          </div>
+        {/* Action Callout with Animated Buttons */}
+        <ScrollReveal animation="zoom">
+          <div className="p-8 bg-slate-900 text-white rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl card-interactive-cyber border border-slate-800">
+            <div>
+              <h3 className="text-xl font-bold font-display">
+                {language === 'roman' ? 'Kya aapko kisi specific kaam ka estimate chahiye?' : 'Need a formal estimate for your office or residence?'}
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                {language === 'roman'
+                  ? 'Call karein: 0346 3902834 ya online inspection visit request submit karein.'
+                  : 'Call our hotline: 0346 3902834 or request a technician inspection online.'}
+              </p>
+            </div>
 
-          <div className="flex items-center gap-3">
-            <a
-              href={createTelUrl(settings.phoneE164)}
-              className="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center gap-2 border border-slate-700"
-            >
-              <Phone className="w-4 h-4 text-cyan-400" />
-              <span>0346 3902834</span>
-            </a>
+            <div className="flex items-center gap-3">
+              <a
+                href={createTelUrl(settings.phoneE164)}
+                className="btn-animated btn-glow-dark px-5 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center gap-2 border border-slate-700 group shadow-md"
+              >
+                <Phone className="w-4 h-4 text-cyan-400 group-hover-phone-wobble transition-transform" />
+                <span>0346 3902834</span>
+              </a>
 
-            <button
-              onClick={onOpenBooking}
-              className="px-6 py-3 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold rounded-xl text-xs sm:text-sm flex items-center gap-2 cursor-pointer shadow-md"
-            >
-              <span>{language === 'roman' ? 'Technician Bulayein' : 'Book Inspection'}</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+              <button
+                onClick={onOpenBooking}
+                className="btn-animated btn-glow-cyan px-6 py-3 bg-gradient-to-r from-cyan-400 to-cyan-300 hover:from-cyan-300 hover:to-cyan-200 text-slate-950 font-bold rounded-xl text-xs sm:text-sm flex items-center gap-2 cursor-pointer shadow-lg group"
+              >
+                <span>{language === 'roman' ? 'Technician Bulayein' : 'Book Inspection'}</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+              </button>
+            </div>
           </div>
-        </div>
+        </ScrollReveal>
 
       </div>
     </div>

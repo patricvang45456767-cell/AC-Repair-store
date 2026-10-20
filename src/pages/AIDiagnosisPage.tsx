@@ -17,6 +17,7 @@ import {
 import { Language, translations } from '../data/translations';
 import { requestAIDiagnosis } from '../lib/api';
 import { DEMO_IMAGES } from '../constants/images';
+import { ScrollReveal } from '../components/common/ScrollReveal';
 
 interface AIDiagnosisPageProps {
   language: Language;
@@ -127,40 +128,44 @@ export const AIDiagnosisPage: React.FC<AIDiagnosisPageProps> = ({
     <div className="py-12 sm:py-16 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         
-        {/* Header */}
-        <div className="text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-cyan-100 text-cyan-800 text-xs font-bold uppercase tracking-wider mb-3">
-            <Sparkles className="w-4 h-4 text-cyan-600 animate-pulse" />
-            <span>High-Thinking HVAC Diagnostic Engine</span>
+        {/* Header with ScrollReveal fade-down */}
+        <ScrollReveal animation="fade-down">
+          <div className="text-center max-w-3xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-cyan-100 text-cyan-800 text-xs font-bold uppercase tracking-wider mb-3 animate-float-subtle">
+              <Sparkles className="w-4 h-4 text-cyan-600 animate-pulse" />
+              <span>High-Thinking HVAC Diagnostic Engine</span>
+            </div>
+            <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 font-display">
+              {language === 'roman' ? 'AI Se AC Ka Masla Maloom Karein' : 'AI AC Fault Diagnostic Center'}
+            </h1>
+            <p className="mt-3 text-slate-600 text-sm sm:text-base leading-relaxed">
+              {language === 'roman'
+                ? 'Compressor behavior, error codes, gas leakage aur capacitor tripping ka mukammal scientific tajziya. Neeche apna masla darj karein:'
+                : 'Our high-thinking diagnostic engine evaluates refrigerant pressure curves, inverter IPM signals, and thermistor resistance drift to explain why your AC is failing.'}
+            </p>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 font-display">
-            {language === 'roman' ? 'AI Se AC Ka Masla Maloom Karein' : 'AI AC Fault Diagnostic Center'}
-          </h1>
-          <p className="mt-3 text-slate-600 text-sm sm:text-base leading-relaxed">
-            {language === 'roman'
-              ? 'Compressor behavior, error codes, gas leakage aur capacitor tripping ka mukammal scientific tajziya. Neeche apna masla darj karein:'
-              : 'Our high-thinking diagnostic engine evaluates refrigerant pressure curves, inverter IPM signals, and thermistor resistance drift to explain why your AC is failing.'}
-          </p>
-        </div>
+        </ScrollReveal>
 
         {/* Diagnostic Form & Result Box */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* Form */}
-          <div className="lg:col-span-6 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm">
-            <div className="flex items-center gap-3 pb-5 border-b border-slate-200 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-cyan-600 flex items-center justify-center text-white shadow-xs">
-                <Cpu className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-lg text-slate-900 font-display">
-                  {language === 'roman' ? 'AC Ki Kharabi Batayein' : 'Describe the Fault'}
-                </h3>
-                <p className="text-xs text-slate-500">
-                  {language === 'roman' ? 'Inverter & Conventional Systems' : 'Inverter & Conventional Units'}
-                </p>
-              </div>
-            </div>
+          {/* Form with ScrollReveal fade-left */}
+          <div className="lg:col-span-6">
+            <ScrollReveal animation="fade-left">
+              <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm card-interactive">
+                <div className="flex items-center gap-3 pb-5 border-b border-slate-200 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-600 flex items-center justify-center text-white shadow-xs group-hover:scale-110 transition-transform">
+                    <Cpu className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg text-slate-900 font-display">
+                      {language === 'roman' ? 'AC Ki Kharabi Batayein' : 'Describe the Fault'}
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      {language === 'roman' ? 'Inverter & Conventional Systems' : 'Inverter & Conventional Units'}
+                    </p>
+                  </div>
+                </div>
 
             <form onSubmit={handleRunDiagnosis} className="space-y-5">
               {/* Common Presets */}
@@ -266,98 +271,105 @@ export const AIDiagnosisPage: React.FC<AIDiagnosisPageProps> = ({
                 )}
               </button>
             </form>
+              </div>
+            </ScrollReveal>
           </div>
 
-          {/* Diagnostic Result */}
-          <div className="lg:col-span-6 bg-slate-900 text-slate-100 rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-xl min-h-[480px] flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-6">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-cyan-400" />
-                  <h4 className="font-bold text-white text-base font-display">
-                    {language === 'roman' ? 'Engineering Diagnostic Report' : 'Diagnostic Engineering Report'}
-                  </h4>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                  <Clock className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>ABC Air Care Protocol</span>
-                </div>
-              </div>
-
-              {loading && (
-                <div className="py-16 flex flex-col items-center justify-center text-center space-y-4">
-                  <div className="relative">
-                    <div className="w-16 h-16 rounded-full border-4 border-cyan-500/20 border-t-cyan-400 animate-spin"></div>
-                    <Cpu className="w-6 h-6 text-cyan-400 absolute inset-0 m-auto" />
-                  </div>
-                  <div>
-                    <h5 className="font-bold text-white text-sm">
-                      {language === 'roman' ? 'AI High-Thinking Mode Chalu Hai...' : 'AI High-Thinking Mode Processing...'}
-                    </h5>
-                    <p className="text-xs text-cyan-400 mt-1 animate-pulse">
-                      {language === 'roman'
-                        ? 'Thermodynamics aur refrigerant parameters calculate ho rahe hain...'
-                        : 'Simulating refrigerant phase-change curves & electrical schematics...'}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {!loading && !diagnosisResult && (
-                <div className="py-20 text-center text-slate-400 space-y-3">
-                  <Cpu className="w-12 h-12 text-slate-700 mx-auto" />
-                  <h5 className="font-bold text-slate-300 text-sm">
-                    {language === 'roman' ? 'Koi Masla Select Nahi Hua' : 'No Active Diagnostic Query'}
-                  </h5>
-                  <p className="text-xs max-w-sm mx-auto text-slate-400 leading-relaxed">
-                    {language === 'roman'
-                      ? 'Left side se symptom select karein ya khud likh kar "Run AI" dabayein.'
-                      : 'Select a symptom on the left or type your problem description and click Analyze.'}
-                  </p>
-                </div>
-              )}
-
-              {!loading && diagnosisResult && (
-                <div className="space-y-4 text-xs sm:text-sm text-slate-200">
-                  <div className="p-3 bg-cyan-950/60 border border-cyan-800/80 rounded-xl text-cyan-300 text-xs flex items-start gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-bold">{language === 'roman' ? 'Masla:' : 'Evaluated Issue:'} </span>
-                      <span>{symptom}</span>
+          {/* Diagnostic Result with ScrollReveal fade-right */}
+          <div className="lg:col-span-6">
+            <ScrollReveal animation="fade-right">
+              <div className="bg-slate-900 text-slate-100 rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-xl min-h-[480px] flex flex-col justify-between card-interactive-cyber">
+                <div>
+                  <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-6">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-cyan-400" />
+                      <h4 className="font-bold text-white text-base font-display">
+                        {language === 'roman' ? 'Engineering Diagnostic Report' : 'Diagnostic Engineering Report'}
+                      </h4>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                      <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>ABC Air Care Protocol</span>
                     </div>
                   </div>
 
-                  <div className="prose prose-invert prose-xs max-w-none space-y-3 leading-relaxed whitespace-pre-line text-slate-300">
-                    {diagnosisResult}
-                  </div>
+                  {loading && (
+                    <div className="py-16 flex flex-col items-center justify-center text-center space-y-4">
+                      <div className="relative">
+                        <div className="w-16 h-16 rounded-full border-4 border-cyan-500/20 border-t-cyan-400 animate-spin"></div>
+                        <Cpu className="w-6 h-6 text-cyan-400 absolute inset-0 m-auto" />
+                      </div>
+                      <div>
+                        <h5 className="font-bold text-white text-sm">
+                          {language === 'roman' ? 'AI High-Thinking Mode Chalu Hai...' : 'AI High-Thinking Mode Processing...'}
+                        </h5>
+                        <p className="text-xs text-cyan-400 mt-1 animate-pulse">
+                          {language === 'roman'
+                            ? 'Thermodynamics aur refrigerant parameters calculate ho rahe hain...'
+                            : 'Simulating refrigerant phase-change curves & electrical schematics...'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {!loading && !diagnosisResult && (
+                    <div className="py-20 text-center text-slate-400 space-y-3">
+                      <Cpu className="w-12 h-12 text-slate-700 mx-auto" />
+                      <h5 className="font-bold text-slate-300 text-sm">
+                        {language === 'roman' ? 'Koi Masla Select Nahi Hua' : 'No Active Diagnostic Query'}
+                      </h5>
+                      <p className="text-xs max-w-sm mx-auto text-slate-400 leading-relaxed">
+                        {language === 'roman'
+                          ? 'Left side se symptom select karein ya khud likh kar "Run AI" dabayein.'
+                          : 'Select a symptom on the left or type your problem description and click Analyze.'}
+                      </p>
+                    </div>
+                  )}
+
+                  {!loading && diagnosisResult && (
+                    <div className="space-y-4 text-xs sm:text-sm text-slate-200">
+                      <div className="p-3 bg-cyan-950/60 border border-cyan-800/80 rounded-xl text-cyan-300 text-xs flex items-start gap-2.5">
+                        <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold">{language === 'roman' ? 'Masla:' : 'Evaluated Issue:'} </span>
+                          <span>{symptom}</span>
+                        </div>
+                      </div>
+
+                      <div className="prose prose-invert prose-xs max-w-none space-y-3 leading-relaxed whitespace-pre-line text-slate-300">
+                        {diagnosisResult}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <div className="mt-8 pt-5 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
-                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>
-                  {language === 'roman'
-                    ? 'Digital manifold gauge se physical checkup zaruri hai.'
-                    : 'Physical gauge testing required for certified warranty repair.'}
-                </span>
+                <div className="mt-8 pt-5 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                    <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>
+                      {language === 'roman'
+                        ? 'Digital manifold gauge se physical checkup zaruri hai.'
+                        : 'Physical gauge testing required for certified warranty repair.'}
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={handleBookFromDiagnosis}
+                    className="btn-animated btn-glow-cyan w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-slate-950 bg-cyan-400 hover:bg-cyan-300 rounded-xl shadow-md flex items-center justify-center gap-1.5 cursor-pointer shrink-0 group"
+                  >
+                    <span>{language === 'roman' ? 'Yeh Repair Visit Book Karein' : 'Book This Repair Visit'}</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+                  </button>
+                </div>
               </div>
-
-              <button
-                onClick={handleBookFromDiagnosis}
-                className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-slate-950 bg-cyan-400 hover:bg-cyan-300 rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
-              >
-                <span>{language === 'roman' ? 'Yeh Repair Visit Book Karein' : 'Book This Repair Visit'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+            </ScrollReveal>
           </div>
 
         </div>
 
-        {/* Quick Error Code Reference Database */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+        {/* Quick Error Code Reference Database with ScrollReveal */}
+        <ScrollReveal animation="fade-up">
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6 card-interactive">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
             <div>
               <div className="flex items-center gap-2 text-cyan-600 text-xs font-bold uppercase tracking-wider mb-1">
@@ -413,6 +425,7 @@ export const AIDiagnosisPage: React.FC<AIDiagnosisPageProps> = ({
             </table>
           </div>
         </div>
+      </ScrollReveal>
 
       </div>
     </div>

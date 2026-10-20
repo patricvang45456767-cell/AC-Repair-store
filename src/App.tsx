@@ -12,9 +12,12 @@ import { PricingPage } from './pages/PricingPage';
 import { CoveragePage } from './pages/CoveragePage';
 import { GalleryPage } from './pages/GalleryPage';
 import { VideosPage } from './pages/VideosPage';
+import { ThreeDLabPage } from './pages/ThreeDLabPage';
 import { ContactPage } from './pages/ContactPage';
 import { Footer } from './components/common/Footer';
 import { FloatingCTABar } from './components/common/FloatingCTABar';
+import { ScrollProgressBar } from './components/common/ScrollProgressBar';
+import { ScrollToTopButton } from './components/common/ScrollToTopButton';
 import { BookServiceModal } from './components/sections/BookServiceModal';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { SiteSettings } from './types';
@@ -36,7 +39,7 @@ export default function App() {
   useEffect(() => {
     const parseHash = () => {
       const hash = window.location.hash.replace('#/', '').replace('#', '');
-      const validPages: PageId[] = ['home', 'services', 'videos', 'ai-diagnosis', 'pricing', 'coverage', 'gallery', 'contact'];
+      const validPages: PageId[] = ['home', 'services', '3d-lab', 'videos', 'ai-diagnosis', 'pricing', 'coverage', 'gallery', 'contact'];
       if (validPages.includes(hash as PageId)) {
         setCurrentPage(hash as PageId);
       } else if (!hash) {
@@ -78,6 +81,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-cyan-500 selection:text-white pb-16 sm:pb-0">
+      {/* Scroll-Driven Dynamic Progress Bar */}
+      <ScrollProgressBar />
+
       {/* Header with Multi-Page Navigation and Roman Urdu / English Toggle */}
       <Header
         settings={settings}
@@ -89,20 +95,29 @@ export default function App() {
         onOpenAdmin={() => setAdminOpen(true)}
       />
 
-      {/* Main Multi-Page Route Render */}
-      <main className="flex-1">
-        {currentPage === 'home' && (
-          <HomePage
-            settings={settings}
-            language={language}
-            onNavigate={handleNavigate}
-            onOpenBooking={handleOpenBooking}
-            onSelectQuickSymptom={handleSelectQuickSymptom}
-          />
-        )}
+      {/* Main Multi-Page Route Render with Page Entrance Animation */}
+      <main className="flex-1 overflow-x-hidden">
+        <div key={currentPage} className="animate-page-entrance">
+          {currentPage === 'home' && (
+            <HomePage
+              settings={settings}
+              language={language}
+              onNavigate={handleNavigate}
+              onOpenBooking={handleOpenBooking}
+              onSelectQuickSymptom={handleSelectQuickSymptom}
+            />
+          )}
 
         {currentPage === 'services' && (
           <ServicesPage
+            language={language}
+            onOpenBooking={handleOpenBooking}
+          />
+        )}
+
+        {currentPage === '3d-lab' && (
+          <ThreeDLabPage
+            settings={settings}
             language={language}
             onOpenBooking={handleOpenBooking}
           />
@@ -153,6 +168,7 @@ export default function App() {
             language={language}
           />
         )}
+        </div>
       </main>
 
       {/* Footer */}
@@ -169,6 +185,9 @@ export default function App() {
         language={language}
         onOpenBooking={() => handleOpenBooking()}
       />
+
+      {/* Floating Scroll to Top Button */}
+      <ScrollToTopButton />
 
       {/* Book Service Modal */}
       <BookServiceModal

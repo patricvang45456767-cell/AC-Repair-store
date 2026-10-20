@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Phone, MessageSquare, Menu, X, ShieldCheck, Wrench, Shield, ChevronRight, Sparkles, Globe, Home } from 'lucide-react';
+import { Phone, MessageSquare, Menu, X, ShieldCheck, Wrench, Shield, ChevronRight, Sparkles, Globe, Home, Box } from 'lucide-react';
 import { SiteSettings } from '../../types';
 import { Language, translations } from '../../data/translations';
 import { createTelUrl, createWhatsAppUrl } from '../../lib/utils';
 
-export type PageId = 'home' | 'services' | 'videos' | 'ai-diagnosis' | 'pricing' | 'coverage' | 'gallery' | 'contact';
+export type PageId = 'home' | 'services' | '3d-lab' | 'videos' | 'ai-diagnosis' | 'pricing' | 'coverage' | 'gallery' | 'contact';
 
 interface HeaderProps {
   settings: SiteSettings;
@@ -40,8 +40,9 @@ export const Header: React.FC<HeaderProps> = ({
   const navLinks: { id: PageId; label: string; highlight?: boolean }[] = [
     { id: 'home', label: t.navHome },
     { id: 'services', label: t.navServices },
+    { id: '3d-lab', label: t.nav3d, highlight: true },
     { id: 'videos', label: t.navVideos },
-    { id: 'ai-diagnosis', label: t.navAi, highlight: true },
+    { id: 'ai-diagnosis', label: t.navAi },
     { id: 'pricing', label: t.navPricing },
     { id: 'coverage', label: t.navCoverage },
     { id: 'gallery', label: t.navGallery },
@@ -176,30 +177,34 @@ export const Header: React.FC<HeaderProps> = ({
               href={createWhatsAppUrl(settings.whatsappE164, settings.whatsappPrefill)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-all shadow-xs"
+              className="btn-animated btn-glow-emerald flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-lg group"
               title="WhatsApp: 0346 3902834"
             >
-              <MessageSquare className="w-4 h-4 fill-emerald-600 text-emerald-600" />
+              <MessageSquare className="w-4 h-4 fill-emerald-600 text-emerald-600 group-hover:scale-125 group-hover:rotate-6 transition-transform" />
               <span>WhatsApp</span>
             </a>
 
             {/* Direct Call to 0346 3902834 */}
             <a
               href={createTelUrl(settings.phoneE164)}
-              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg transition-all shadow-xs"
+              className="btn-animated btn-glow-dark flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg group"
               title={`Call: ${settings.phoneDisplay}`}
             >
-              <Phone className="w-4 h-4 text-cyan-600" />
+              <Phone className="w-4 h-4 text-cyan-600 group-hover-phone-wobble transition-transform" />
               <span>{settings.phoneDisplay}</span>
             </a>
 
             {/* Book Service Modal Button */}
             <button
               onClick={() => onOpenBooking()}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-cyan-600 to-slate-900 hover:from-cyan-500 hover:to-slate-800 rounded-lg shadow-sm shadow-cyan-900/20 transition-all hover:shadow-md cursor-pointer"
+              className="btn-animated btn-glow-cyan btn-shimmer-continuous flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-cyan-600 to-slate-900 hover:from-cyan-500 hover:to-slate-800 rounded-lg group shadow-md"
             >
+              <span className="relative flex h-2 w-2 mr-0.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-300 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400"></span>
+              </span>
               <span>{t.btnBookInspection}</span>
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
             </button>
           </div>
 
@@ -208,13 +213,13 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={() => onToggleLanguage(language === 'roman' ? 'en' : 'roman')}
-              className="px-2 py-1 text-[11px] font-bold bg-slate-100 text-slate-800 rounded-lg border border-slate-200 cursor-pointer"
+              className="btn-animated px-2 py-1 text-[11px] font-bold bg-slate-100 text-slate-800 rounded-lg border border-slate-200"
             >
               {language === 'roman' ? 'EN' : 'Roman'}
             </button>
             <button
               onClick={() => onOpenBooking()}
-              className="px-2.5 py-1 text-xs font-bold text-white bg-cyan-600 rounded-lg cursor-pointer"
+              className="btn-animated btn-glow-cyan px-2.5 py-1 text-xs font-bold text-white bg-cyan-600 rounded-lg"
             >
               Book
             </button>
@@ -307,26 +312,27 @@ export const Header: React.FC<HeaderProps> = ({
                   setMobileMenuOpen(false);
                   onOpenBooking();
                 }}
-                className="w-full py-3 text-center font-bold text-white bg-cyan-600 hover:bg-cyan-500 rounded-xl shadow-md text-sm cursor-pointer"
+                className="btn-animated btn-glow-cyan w-full py-3 text-center font-bold text-white bg-cyan-600 hover:bg-cyan-500 rounded-xl shadow-md text-sm cursor-pointer group flex items-center justify-center gap-2"
               >
-                {t.btnBookInspection}
+                <span>{t.btnBookInspection}</span>
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
 
               <div className="grid grid-cols-2 gap-2">
                 <a
                   href={createTelUrl(settings.phoneE164)}
-                  className="py-2.5 px-3 bg-slate-100 text-slate-900 font-bold rounded-xl flex items-center justify-center gap-1.5 text-xs"
+                  className="btn-animated btn-glow-dark py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold rounded-xl flex items-center justify-center gap-1.5 text-xs group"
                 >
-                  <Phone className="w-4 h-4 text-cyan-600" />
+                  <Phone className="w-4 h-4 text-cyan-600 group-hover:rotate-12 transition-transform" />
                   <span>Call: 0346 3902834</span>
                 </a>
                 <a
                   href={createWhatsAppUrl(settings.whatsappE164, settings.whatsappPrefill)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="py-2.5 px-3 bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold rounded-xl flex items-center justify-center gap-1.5 text-xs"
+                  className="btn-animated btn-glow-emerald py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold rounded-xl flex items-center justify-center gap-1.5 text-xs group"
                 >
-                  <MessageSquare className="w-4 h-4 fill-emerald-600 text-emerald-600" />
+                  <MessageSquare className="w-4 h-4 fill-emerald-600 text-emerald-600 group-hover:scale-110 transition-transform" />
                   <span>WhatsApp</span>
                 </a>
               </div>

@@ -124,15 +124,15 @@ export const BookServiceModal: React.FC<BookServiceModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative my-auto animate-page-entrance border border-slate-100">
         
-        {/* Close Button */}
+        {/* Close Button with animated rotate */}
         <button
           onClick={handleResetAndClose}
-          className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-2 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+          className="btn-animated absolute top-5 right-5 text-slate-400 hover:text-slate-800 p-2 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all cursor-pointer group"
           aria-label="Close booking modal"
         >
-          <X className="w-5 h-5" />
+          <X className="w-5 h-5 group-hover:rotate-90 transition-transform" />
         </button>
 
         {/* If Success */}
@@ -431,7 +431,7 @@ export const BookServiceModal: React.FC<BookServiceModalProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 px-6 font-bold text-white bg-slate-900 hover:bg-cyan-700 disabled:opacity-50 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-sm cursor-pointer"
+                className="btn-animated btn-glow-cyan w-full py-3.5 px-6 font-bold text-white bg-slate-900 hover:bg-cyan-700 disabled:opacity-50 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-sm group"
               >
                 {loading ? (
                   <>
@@ -440,7 +440,7 @@ export const BookServiceModal: React.FC<BookServiceModalProps> = ({
                   </>
                 ) : (
                   <>
-                    <Wrench className="w-4 h-4 text-cyan-400" />
+                    <Wrench className="w-4 h-4 text-cyan-400 group-hover:rotate-45 transition-transform" />
                     <span>{t.btnSubmitBooking}</span>
                   </>
                 )}

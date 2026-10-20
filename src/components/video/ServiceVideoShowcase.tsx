@@ -19,6 +19,7 @@ import {
 import { Language } from '../../data/translations';
 import { DEMO_IMAGES } from '../../constants/images';
 import { createTelUrl } from '../../lib/utils';
+import { ScrollReveal } from '../common/ScrollReveal';
 
 export interface ServiceVideoItem {
   id: string;
@@ -120,14 +121,25 @@ export const ServiceVideoShowcase: React.FC<ServiceVideoShowcaseProps> = ({
     if (!video) return;
 
     if (video.paused) {
-      // Pause other videos
+      // Pause any other playing video
       Object.entries(videoRefs.current).forEach(([k, v]) => {
         if (k !== id && v && !v.paused) {
           v.pause();
         }
       });
-      video.play();
-      setPlayingId(id);
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setPlayingId(id);
+          })
+          .catch(() => {
+            // Browser prevented audio or aborted playback
+            setPlayingId(null);
+          });
+      } else {
+        setPlayingId(id);
+      }
     } else {
       video.pause();
       setPlayingId(null);
@@ -156,127 +168,131 @@ export const ServiceVideoShowcase: React.FC<ServiceVideoShowcaseProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-10">
         
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-950 border border-cyan-800 text-cyan-400 text-xs font-bold uppercase tracking-wider mb-3">
-            <Film className="w-3.5 h-3.5 text-cyan-400" />
-            <span>{language === 'roman' ? '3 Khasoosi Service Video Ads' : 'Featured 3 Service Video Ads'}</span>
+        <ScrollReveal animation="fade-down">
+          <div className="text-center max-w-3xl mx-auto">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-950 border border-cyan-800 text-cyan-400 text-xs font-bold uppercase tracking-wider mb-3 animate-float-subtle">
+              <Film className="w-3.5 h-3.5 text-cyan-400" />
+              <span>{language === 'roman' ? '3 Khasoosi Service Video Ads' : 'Featured 3 Service Video Ads'}</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-display text-white">
+              {title || (language === 'roman' ? 'ABC Air Care Ki Service Video Ads' : 'Watch Our Real Engineering Procedures in Action')}
+            </h2>
+            <p className="mt-3 text-slate-300 text-xs sm:text-sm leading-relaxed">
+              {subtitle || (language === 'roman'
+                ? 'Dekhein hamare certified technicians kis tarah jet wash, gas leak isolation aur inverter PCB motherboards ko live anjaam dete hain.'
+                : 'See how our technicians execute deep chemical jet washes, dry nitrogen leak tests, and component-level inverter board diagnostics in real field environments.')}
+            </p>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-display text-white">
-            {title || (language === 'roman' ? 'ABC Air Care Ki Service Video Ads' : 'Watch Our Real Engineering Procedures in Action')}
-          </h2>
-          <p className="mt-3 text-slate-300 text-xs sm:text-sm leading-relaxed">
-            {subtitle || (language === 'roman'
-              ? 'Dekhein hamare certified technicians kis tarah jet wash, gas leak isolation aur inverter PCB motherboards ko live anjaam dete hain.'
-              : 'See how our technicians execute deep chemical jet washes, dry nitrogen leak tests, and component-level inverter board diagnostics in real field environments.')}
-          </p>
-        </div>
+        </ScrollReveal>
 
         {/* 3 Video Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
-          {videoAds.map((item) => {
+          {videoAds.map((item, idx) => {
             const isPlaying = playingId === item.id;
             const isMuted = mutedStates[item.id] !== false;
 
             return (
-              <div
-                key={item.id}
-                className="bg-slate-800/90 border border-slate-700 rounded-3xl overflow-hidden shadow-xl hover:border-cyan-500/60 transition-all flex flex-col justify-between group"
-              >
-                <div>
-                  {/* Video Player Container */}
-                  <div
-                    className="relative aspect-video w-full bg-slate-950 cursor-pointer overflow-hidden group/player"
-                    onClick={() => togglePlay(item.id)}
-                    data-testid={`video-card-${item.id}`}
-                  >
-                    <video
-                      ref={(el) => {
-                        videoRefs.current[item.id] = el;
-                      }}
-                      src={item.videoSrc}
-                      poster={item.posterSrc}
-                      playsInline
-                      loop
-                      muted={isMuted}
-                      onEnded={() => setPlayingId(null)}
-                      className="w-full h-full object-cover group-hover/player:scale-102 transition-transform duration-300"
-                    />
-
-                    {/* Dark gradient overlay for title legibility */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/40 pointer-events-none"></div>
-
-                    {/* Top Ad Badge */}
-                    <div className="absolute top-3 left-3 flex items-center gap-2 pointer-events-none">
-                      <span className="px-2.5 py-0.5 bg-cyan-600 text-slate-950 text-[10px] font-extrabold rounded-full uppercase tracking-wider shadow-sm">
-                        {item.adNumber}
-                      </span>
-                      <span className="px-2.5 py-0.5 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold rounded-full border border-slate-700">
-                        {item.badge}
-                      </span>
-                    </div>
-
-                    {/* Duration Badge */}
-                    <div className="absolute top-3 right-3 px-2 py-0.5 bg-slate-900/80 backdrop-blur-md text-cyan-300 text-[10px] font-mono font-bold rounded-md border border-slate-700 pointer-events-none">
-                      {item.duration} HD
-                    </div>
-
-                    {/* Center Big Play/Pause Button */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <button
-                        type="button"
-                        aria-label={isPlaying ? 'Pause video' : 'Play video'}
-                        data-testid={`play-btn-${item.id}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          togglePlay(item.id);
+              <ScrollReveal key={item.id} animation="fade-up" delay={idx * 120}>
+                <div
+                  className="bg-slate-800/90 border border-slate-700/80 rounded-3xl overflow-hidden shadow-xl card-interactive-cyber flex flex-col justify-between group h-full"
+                >
+                  <div>
+                    {/* Video Player Container */}
+                    <div
+                      className="relative aspect-video w-full bg-slate-950 cursor-pointer overflow-hidden group/player"
+                      onClick={() => togglePlay(item.id)}
+                      data-testid={`video-card-${item.id}`}
+                    >
+                      <video
+                        ref={(el) => {
+                          videoRefs.current[item.id] = el;
                         }}
-                        className={`w-14 h-14 rounded-full bg-cyan-500/90 hover:bg-cyan-400 text-slate-950 flex items-center justify-center shadow-lg backdrop-blur-xs transition-all pointer-events-auto cursor-pointer ${
-                          isPlaying ? 'opacity-0 hover:opacity-100 scale-90' : 'opacity-100 scale-100'
-                        }`}
-                      >
-                        {isPlaying ? <Pause className="w-6 h-6 fill-slate-950" /> : <Play className="w-6 h-6 fill-slate-950 ml-0.5" />}
-                      </button>
-                    </div>
+                        src={item.videoSrc}
+                        poster={item.posterSrc}
+                        playsInline
+                        loop
+                        muted={isMuted}
+                        onPlay={() => setPlayingId(item.id)}
+                        onPause={() => setPlayingId((prev) => (prev === item.id ? null : prev))}
+                        onEnded={() => setPlayingId(null)}
+                        className="w-full h-full object-cover group-hover/player:scale-105 transition-transform duration-500"
+                      />
 
-                    {/* Bottom Video Controls Overlay */}
-                    <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-xs text-white z-10 pointer-events-auto">
-                      <div className="flex items-center gap-2">
+                      {/* Dark gradient overlay for title legibility */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/40 pointer-events-none"></div>
+
+                      {/* Top Ad Badge */}
+                      <div className="absolute top-3 left-3 flex items-center gap-2 pointer-events-none">
+                        <span className="px-2.5 py-0.5 bg-cyan-500 text-slate-950 text-[10px] font-extrabold rounded-full uppercase tracking-wider shadow-md">
+                          {item.adNumber}
+                        </span>
+                        <span className="px-2.5 py-0.5 bg-slate-900/85 backdrop-blur-md text-white text-[10px] font-bold rounded-full border border-slate-700">
+                          {item.badge}
+                        </span>
+                      </div>
+
+                      {/* Duration Badge */}
+                      <div className="absolute top-3 right-3 px-2 py-0.5 bg-slate-900/85 backdrop-blur-md text-cyan-300 text-[10px] font-mono font-bold rounded-md border border-slate-700 pointer-events-none">
+                        {item.duration} HD
+                      </div>
+
+                      {/* Center Big Play/Pause Button */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <button
                           type="button"
-                          aria-label={isPlaying ? 'Pause' : 'Play'}
-                          data-testid={`control-play-${item.id}`}
+                          aria-label={isPlaying ? 'Pause video' : 'Play video'}
+                          data-testid={`play-btn-${item.id}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             togglePlay(item.id);
                           }}
-                          className="p-1 rounded-md bg-slate-900/80 hover:bg-cyan-600 text-white transition-colors cursor-pointer"
+                          className={`btn-animated btn-glow-cyan w-14 h-14 rounded-full bg-cyan-400 hover:bg-cyan-300 text-slate-950 flex items-center justify-center shadow-xl backdrop-blur-xs transition-all pointer-events-auto cursor-pointer ${
+                            isPlaying ? 'opacity-0 hover:opacity-100 scale-90' : 'opacity-100 scale-100 pulse-ring-effect'
+                          }`}
                         >
-                          {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                        </button>
-
-                        <button
-                          type="button"
-                          aria-label={isMuted ? 'Unmute' : 'Mute'}
-                          data-testid={`control-mute-${item.id}`}
-                          onClick={(e) => toggleMute(item.id, e)}
-                          className="p-1 rounded-md bg-slate-900/80 hover:bg-cyan-600 text-white transition-colors cursor-pointer"
-                          title={isMuted ? 'Unmute' : 'Mute'}
-                        >
-                          {isMuted ? <VolumeX className="w-3.5 h-3.5 text-slate-400" /> : <Volume2 className="w-3.5 h-3.5 text-cyan-400" />}
+                          {isPlaying ? <Pause className="w-6 h-6 fill-slate-950" /> : <Play className="w-6 h-6 fill-slate-950 ml-0.5" />}
                         </button>
                       </div>
 
-                      <button
-                        type="button"
-                        data-testid={`theatre-${item.id}`}
-                        onClick={(e) => openFullscreen(item, e)}
-                        className="p-1 rounded-md bg-slate-900/80 hover:bg-cyan-600 text-white transition-colors cursor-pointer"
-                        title="Theatre Mode"
-                      >
-                        <Maximize2 className="w-3.5 h-3.5" />
-                      </button>
+                      {/* Bottom Video Controls Overlay */}
+                      <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-xs text-white z-10 pointer-events-auto">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            aria-label={isPlaying ? 'Pause' : 'Play'}
+                            data-testid={`control-play-${item.id}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              togglePlay(item.id);
+                            }}
+                            className="btn-animated p-1.5 rounded-lg bg-slate-900/80 hover:bg-cyan-500 hover:text-slate-950 text-white transition-colors cursor-pointer"
+                          >
+                            {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                          </button>
+
+                          <button
+                            type="button"
+                            aria-label={isMuted ? 'Unmute' : 'Mute'}
+                            data-testid={`control-mute-${item.id}`}
+                            onClick={(e) => toggleMute(item.id, e)}
+                            className="btn-animated p-1.5 rounded-lg bg-slate-900/80 hover:bg-cyan-500 hover:text-slate-950 text-white transition-colors cursor-pointer"
+                            title={isMuted ? 'Unmute' : 'Mute'}
+                          >
+                            {isMuted ? <VolumeX className="w-3.5 h-3.5 text-slate-400" /> : <Volume2 className="w-3.5 h-3.5 text-cyan-400" />}
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          data-testid={`theatre-${item.id}`}
+                          onClick={(e) => openFullscreen(item, e)}
+                          className="btn-animated p-1.5 rounded-lg bg-slate-900/80 hover:bg-cyan-500 hover:text-slate-950 text-white transition-colors cursor-pointer"
+                          title="Theatre Mode"
+                        >
+                          <Maximize2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
                   {/* Body Content */}
                   <div className="p-5 sm:p-6 space-y-4">
@@ -313,36 +329,39 @@ export const ServiceVideoShowcase: React.FC<ServiceVideoShowcaseProps> = ({
 
                   <button
                     onClick={() => onOpenBooking(item.serviceId)}
-                    className="px-4 py-2 bg-gradient-to-r from-cyan-400 to-cyan-300 hover:from-cyan-300 hover:to-cyan-200 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md cursor-pointer transition-all"
+                    className="btn-animated btn-glow-cyan px-4 py-2 bg-gradient-to-r from-cyan-400 to-cyan-300 hover:from-cyan-300 hover:to-cyan-200 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md group cursor-pointer"
                   >
                     <span>{language === 'roman' ? 'Yeh Service Book Karein' : 'Book Service'}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </button>
                 </div>
               </div>
+            </ScrollReveal>
             );
           })}
         </div>
 
-        {/* Quick Phone Callout */}
-        <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-slate-800/80 border border-slate-700 text-xs text-slate-300">
-          <div className="flex items-center gap-2.5">
-            <ShieldCheck className="w-5 h-5 text-cyan-400 shrink-0" />
-            <span>
-              {language === 'roman'
-                ? 'Videos me dikhaya gaya tamam protocol hamare certified technicians on-site follow karte hain.'
-                : 'All procedures shown above are executed with strict adherence to factory vacuum and pressure specifications.'}
-            </span>
-          </div>
+        {/* Quick Phone Callout with ScrollReveal */}
+        <ScrollReveal animation="fade-up" delay={200}>
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-slate-800/80 border border-slate-700/80 text-xs text-slate-300 card-interactive">
+            <div className="flex items-center gap-2.5">
+              <ShieldCheck className="w-5 h-5 text-cyan-400 shrink-0" />
+              <span>
+                {language === 'roman'
+                  ? 'Videos me dikhaya gaya tamam protocol hamare certified technicians on-site follow karte hain.'
+                  : 'All procedures shown above are executed with strict adherence to factory vacuum and pressure specifications.'}
+              </span>
+            </div>
 
-          <a
-            href={createTelUrl('+923463902834')}
-            className="text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1.5 shrink-0"
-          >
-            <Phone className="w-4 h-4" />
-            <span>Direct Hotline: 0346 3902834</span>
-          </a>
-        </div>
+            <a
+              href={createTelUrl('+923463902834')}
+              className="btn-animated btn-glow-dark px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1.5 shrink-0 group"
+            >
+              <Phone className="w-4 h-4 group-hover-phone-wobble transition-transform" />
+              <span>Direct Hotline: 0346 3902834</span>
+            </a>
+          </div>
+        </ScrollReveal>
 
       </div>
 
