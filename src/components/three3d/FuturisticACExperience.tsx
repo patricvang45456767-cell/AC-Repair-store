@@ -17,7 +17,9 @@ import {
   Phone,
   Wrench,
   CheckCircle2,
-  Camera
+  Camera,
+  Orbit,
+  Boxes
 } from 'lucide-react';
 import { Language } from '../../data/translations';
 import { createTelUrl } from '../../lib/utils';
@@ -48,6 +50,8 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
   const [dockCollapsed, setDockCollapsed] = useState<boolean>(false);
   const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [autoSpin, setAutoSpin] = useState<boolean>(false);
+  const labelRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // References for render loop state updates
   const sceneStateRef = useRef({
@@ -57,6 +61,8 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
     fanSpeed: 'turbo' as 'turbo' | 'eco' | 'pause',
     targetCamPos: new THREE.Vector3(0, 1.2, 7.5),
     targetLookAt: new THREE.Vector3(0, 0, 0),
+    animateCam: false, // only drive the camera while a preset transition is running
+    autoSpin: false,
   });
 
   // Keep ref in sync with state
@@ -70,10 +76,33 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
     }
   }, [viewMode, explodedRatio, fanSpeed]);
 
+  useEffect(() => {
+    sceneStateRef.current.autoSpin = autoSpin;
+  }, [autoSpin]);
+
+  // One-click: spread every part into the air (and pull the camera back), or assemble again.
+  const isFullyExploded = viewMode === 'exploded' && explodedRatio >= 0.95;
+  const toggleExplodeAll = () => {
+    const s = sceneStateRef.current;
+    if (isFullyExploded) {
+      setViewMode('standard');
+      setExplodedRatio(0);
+      s.targetCamPos.set(0, 0.8, 7.2);
+      s.targetLookAt.set(0, 0, 0);
+    } else {
+      setViewMode('exploded');
+      setExplodedRatio(1);
+      s.targetCamPos.set(4.2, 2.0, 11.5);
+      s.targetLookAt.set(0.6, -0.2, 0.4);
+    }
+    s.animateCam = true;
+  };
+
   // Handle camera presets
   const handleSelectPreset = (preset: CameraPreset) => {
     setCameraPreset(preset);
     const s = sceneStateRef.current;
+    s.animateCam = true;
     if (preset === 'default') {
       s.targetCamPos.set(0, 0.8, 7.2);
       s.targetLookAt.set(0, 0, 0);
@@ -135,9 +164,14 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.minDistance = 3.2;
-    controls.maxDistance = 14;
-    controls.maxPolarAngle = Math.PI / 2 + 0.15; // Don't flip under ground
+    controls.maxDistance = 16;
+    controls.maxPolarAngle = Math.PI; // full orbit: top, bottom and all sides
     controls.target.set(0, 0, 0);
+    controls.autoRotateSpeed = 2.2;
+    // As soon as the user touches the model, stop forcing the camera to a preset (fixes 360° rotation).
+    controls.addEventListener('start', () => {
+      sceneStateRef.current.animateCam = false;
+    });
 
     // 4. Lighting Rig (Key, Fill, Rim)
     const keyLight = new THREE.DirectionalLight(0xffffff, 2.8);
@@ -494,6 +528,17 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
     // 6. Pre-allocate math helpers to avoid per-frame GC allocations
     const _vec3 = new THREE.Vector3();
 
+    // Anchors used for on-screen part labels
+    const partAnchors: Array<{ key: string; obj: THREE.Object3D }> = [
+      { key: 'cover', obj: frontCoverGroup },
+      { key: 'louver', obj: louverGroup },
+      { key: 'evaporator', obj: evaporatorGroup },
+      { key: 'blower', obj: blowerGroup },
+      { key: 'pcb', obj: pcbGroup },
+      { key: 'chassis', obj: chassisMesh },
+      { key: 'bracket', obj: bracketMesh },
+    ];
+
     // 7. Resize Handler
     const handleResize = () => {
       if (!container) return;
@@ -527,25 +572,28 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
       );
       const exp = state.currentExploded;
 
-      // Front cover moves forward on Z
-      frontCoverGroup.position.z = THREE.MathUtils.lerp(0, 1.4, exp);
-      frontCoverGroup.position.y = THREE.MathUtils.lerp(0, 0.2, exp);
+      // Every part flies out in its own direction so each one is clearly visible
+      frontCoverGroup.position.z = THREE.MathUtils.lerp(0, 3.4, exp);
+      frontCoverGroup.position.y = THREE.MathUtils.lerp(0, 1.1, exp);
 
-      // Louver shifts downward
-      louverGroup.position.y = THREE.MathUtils.lerp(-0.55, -1.0, exp);
-      louverGroup.position.z = THREE.MathUtils.lerp(0.35, 0.9, exp);
+      louverGroup.position.y = THREE.MathUtils.lerp(-0.55, -2.0, exp);
+      louverGroup.position.z = THREE.MathUtils.lerp(0.35, 2.3, exp);
 
-      // Evaporator core moves forward & up
-      evaporatorGroup.position.z = THREE.MathUtils.lerp(0.05, 0.5, exp);
+      evaporatorGroup.position.z = THREE.MathUtils.lerp(0.05, 1.7, exp);
+      evaporatorGroup.position.y = THREE.MathUtils.lerp(0.1, 0.6, exp);
 
-      // Blower turbine drops forward and down
-      blowerGroup.position.y = THREE.MathUtils.lerp(-0.35, -0.7, exp);
-      blowerGroup.position.z = THREE.MathUtils.lerp(-0.05, 0.4, exp);
+      blowerGroup.position.y = THREE.MathUtils.lerp(-0.35, -1.5, exp);
+      blowerGroup.position.z = THREE.MathUtils.lerp(-0.05, 0.6, exp);
+      blowerGroup.position.x = THREE.MathUtils.lerp(0, -2.4, exp);
 
-      // Inverter PCB glides right & pivots outward
-      pcbGroup.position.x = THREE.MathUtils.lerp(2.0, 3.1, exp);
-      pcbGroup.position.z = THREE.MathUtils.lerp(0.1, 0.7, exp);
-      pcbGroup.rotation.y = THREE.MathUtils.lerp(0, -Math.PI / 5, exp);
+      pcbGroup.position.x = THREE.MathUtils.lerp(2.0, 4.8, exp);
+      pcbGroup.position.z = THREE.MathUtils.lerp(0.1, 0.9, exp);
+      pcbGroup.position.y = THREE.MathUtils.lerp(0, 0.5, exp);
+      pcbGroup.rotation.y = THREE.MathUtils.lerp(0, -Math.PI / 6, exp);
+
+      chassisMesh.position.z = THREE.MathUtils.lerp(-0.3, -1.4, exp);
+      bracketMesh.position.z = THREE.MathUtils.lerp(-0.72, -2.8, exp);
+      bracketMesh.position.y = THREE.MathUtils.lerp(0.4, 1.0, exp);
 
       // 8.2 Blower Turbine Rotation
       let targetRotSpeed = 12;
@@ -612,9 +660,38 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
       }
 
       // 8.5 Camera Target Interpolation
-      camera.position.lerp(state.targetCamPos, 0.04);
-      controls.target.lerp(state.targetLookAt, 0.04);
+      if (state.animateCam) {
+        camera.position.lerp(state.targetCamPos, 0.05);
+        controls.target.lerp(state.targetLookAt, 0.05);
+        if (
+          camera.position.distanceTo(state.targetCamPos) < 0.03 &&
+          controls.target.distanceTo(state.targetLookAt) < 0.03
+        ) {
+          state.animateCam = false;
+        }
+      }
+      controls.autoRotate = state.autoSpin;
       controls.update();
+
+      // Floating part labels follow each part on screen once they separate
+      if (exp > 0.25) {
+        const w = renderer.domElement.clientWidth;
+        const h = renderer.domElement.clientHeight;
+        partAnchors.forEach(({ key, obj }) => {
+          const el = labelRefs.current[key];
+          if (!el) return;
+          obj.getWorldPosition(_vec3);
+          _vec3.project(camera);
+          const behind = _vec3.z > 1;
+          el.style.opacity = behind ? '0' : String(Math.min(1, (exp - 0.25) / 0.5));
+          el.style.transform = `translate(${(_vec3.x * 0.5 + 0.5) * w}px, ${(-_vec3.y * 0.5 + 0.5) * h}px) translate(-50%, -140%)`;
+        });
+      } else {
+        partAnchors.forEach(({ key }) => {
+          const el = labelRefs.current[key];
+          if (el) el.style.opacity = '0';
+        });
+      }
 
       // Render frame
       renderer.render(scene, camera);
@@ -680,6 +757,60 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
     >
       {/* 3D WebGL Canvas Mount Container */}
       <div ref={mountRef} className="w-full h-full absolute inset-0 cursor-grab active:cursor-grabbing" />
+
+
+      {/* Part name labels (positioned each frame from the 3D scene) */}
+      <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
+        {[
+          ['cover', language === 'roman' ? 'Front Panel (Samne ka Cover)' : 'Front Panel'],
+          ['louver', language === 'roman' ? 'Hawa ka Louver' : 'Air Louver'],
+          ['evaporator', language === 'roman' ? 'Evaporator Coil (Copper)' : 'Evaporator Coil'],
+          ['blower', language === 'roman' ? 'Blower Fan' : 'Blower Fan'],
+          ['pcb', language === 'roman' ? 'Inverter PCB (Electronics)' : 'Inverter PCB'],
+          ['chassis', language === 'roman' ? 'Main Body' : 'Main Chassis'],
+          ['bracket', language === 'roman' ? 'Deewar Bracket' : 'Wall Bracket'],
+        ].map(([key, text]) => (
+          <div
+            key={key}
+            ref={(el) => {
+              labelRefs.current[key] = el;
+            }}
+            className="absolute left-0 top-0 opacity-0 transition-opacity duration-200 will-change-transform"
+          >
+            <div className="px-2 py-1 rounded-lg bg-slate-950/90 border border-cyan-500/60 text-cyan-200 text-[11px] font-bold whitespace-nowrap shadow-lg">
+              {text}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Big one-click Explode / Assemble + 360 auto-spin */}
+      <div className="absolute top-16 left-4 sm:top-auto sm:bottom-40 sm:left-6 z-20 flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={toggleExplodeAll}
+          className="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-sm shadow-xl flex items-center gap-2 cursor-pointer transition-colors"
+        >
+          <Boxes className="w-4 h-4" />
+          <span>
+            {isFullyExploded
+              ? language === 'roman' ? 'Wapas Jorein' : 'Assemble AC'
+              : language === 'roman' ? 'AC Ke Parts Kholein' : 'Explode All Parts'}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setAutoSpin((v) => !v)}
+          className={`px-4 py-2 rounded-xl border text-xs font-bold shadow-lg flex items-center gap-2 cursor-pointer transition-colors ${
+            autoSpin
+              ? 'bg-slate-100 text-slate-900 border-white'
+              : 'bg-slate-900/90 text-slate-200 border-slate-600 hover:bg-slate-800'
+          }`}
+        >
+          <Orbit className="w-4 h-4" />
+          <span>{autoSpin ? (language === 'roman' ? '360° Ruko' : 'Stop 360° Spin') : (language === 'roman' ? '360° Ghumayein' : 'Auto 360° Spin')}</span>
+        </button>
+      </div>
 
       {/* Top Left Title & Live Telemetry Badge (Unobtrusive) */}
       <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 pointer-events-none space-y-2">
