@@ -19,10 +19,14 @@ import {
   CheckCircle2,
   Camera,
   Orbit,
-  Boxes
+  Boxes,
+  Cable,
+  Tags
 } from 'lucide-react';
 import { Language } from '../../data/translations';
 import { createTelUrl } from '../../lib/utils';
+import { buildACDetails, OUTDOOR_X, ACDetails } from './acDetails';
+import { PART_INFO, PART_ORDER } from './acPartInfo';
 
 interface FuturisticACExperienceProps {
   language: Language;
@@ -32,7 +36,7 @@ interface FuturisticACExperienceProps {
 }
 
 type ViewMode = 'standard' | 'exploded' | 'thermal';
-type CameraPreset = 'default' | 'angle' | 'pcb' | 'blower';
+type CameraPreset = 'default' | 'angle' | 'pcb' | 'blower' | 'indoor' | 'outdoor' | 'system';
 
 export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
   language,
@@ -51,6 +55,9 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
   const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [autoSpin, setAutoSpin] = useState<boolean>(false);
+  const [showWires, setShowWires] = useState<boolean>(true);
+  const [showLabels, setShowLabels] = useState<boolean>(true);
+  const [activePart, setActivePart] = useState<string | null>(null);
   const labelRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // References for render loop state updates
@@ -63,6 +70,7 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
     targetLookAt: new THREE.Vector3(0, 0, 0),
     animateCam: false, // only drive the camera while a preset transition is running
     autoSpin: false,
+    showWires: true,
   });
 
   // Keep ref in sync with state
@@ -80,6 +88,10 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
     sceneStateRef.current.autoSpin = autoSpin;
   }, [autoSpin]);
 
+  useEffect(() => {
+    sceneStateRef.current.showWires = showWires;
+  }, [showWires]);
+
   // One-click: spread every part into the air (and pull the camera back), or assemble again.
   const isFullyExploded = viewMode === 'exploded' && explodedRatio >= 0.95;
   const toggleExplodeAll = () => {
@@ -92,8 +104,8 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
     } else {
       setViewMode('exploded');
       setExplodedRatio(1);
-      s.targetCamPos.set(4.2, 2.0, 11.5);
-      s.targetLookAt.set(0.6, -0.2, 0.4);
+      s.targetCamPos.set(5.5, 3.0, 19.5);
+      s.targetLookAt.set(5.0, -0.3, 0.4);
     }
     s.animateCam = true;
   };
@@ -113,11 +125,28 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
       s.targetCamPos.set(2.8, 0.6, 2.4);
       s.targetLookAt.set(2.2, 0.2, 0);
       setActiveHotspot('pcb');
+      setActivePart(null);
     } else if (preset === 'blower') {
       s.targetCamPos.set(-2.0, -0.6, 3.2);
       s.targetLookAt.set(-1.0, -0.5, 0);
       setActiveHotspot('blower');
+      setActivePart(null);
+    } else if (preset === 'indoor') {
+      s.targetCamPos.set(0, 0.8, 7.2);
+      s.targetLookAt.set(0, 0, 0);
+    } else if (preset === 'outdoor') {
+      s.targetCamPos.set(OUTDOOR_X + 1.6, 1.4, 6.5);
+      s.targetLookAt.set(OUTDOOR_X, 0, 0);
+    } else if (preset === 'system') {
+      s.targetCamPos.set(4.2, 1.9, 13.5);
+      s.targetLookAt.set(4.2, -0.2, 0.2);
     }
+    // When the parts are spread out, stand further back so everything stays in view
+    if (s.targetExploded > 0.3 && (preset === 'indoor' || preset === 'outdoor' || preset === 'system')) {
+      const k = preset === 'system' ? 1.45 : 1.8;
+      s.targetCamPos.sub(s.targetLookAt).multiplyScalar(k).add(s.targetLookAt);
+    }
+    if (preset !== 'pcb' && preset !== 'blower') setActiveHotspot(null);
   };
 
   useEffect(() => {
@@ -164,7 +193,7 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.minDistance = 3.2;
-    controls.maxDistance = 16;
+    controls.maxDistance = 26;
     controls.maxPolarAngle = Math.PI; // full orbit: top, bottom and all sides
     controls.target.set(0, 0, 0);
     controls.autoRotateSpeed = 2.2;
@@ -528,6 +557,22 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
     // 6. Pre-allocate math helpers to avoid per-frame GC allocations
     const _vec3 = new THREE.Vector3();
 
+    // Detailed extra parts: remaining indoor parts, the whole outdoor unit, wiring, pipes, drain hose
+    const details: ACDetails = buildACDetails(acRootGroup, {
+      frontCover: frontCoverGroup,
+      pcb: pcbGroup,
+      evaporator: evaporatorGroup,
+      louver: louverGroup,
+      materials: {
+        copper: copperCoilMat,
+        aluminum: aluminumFinMat,
+        chip: chipMat,
+        pcbSubstrate: pcbSubstrateMat,
+        goldPin: goldPinMat,
+        dark: blowerMat,
+      },
+    });
+
     // Anchors used for on-screen part labels
     const partAnchors: Array<{ key: string; obj: THREE.Object3D }> = [
       { key: 'cover', obj: frontCoverGroup },
@@ -537,6 +582,7 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
       { key: 'pcb', obj: pcbGroup },
       { key: 'chassis', obj: chassisMesh },
       { key: 'bracket', obj: bracketMesh },
+      ...Object.entries(details.labelAnchors).map(([key, obj]) => ({ key, obj })),
     ];
 
     // 7. Resize Handler
@@ -594,6 +640,14 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
       chassisMesh.position.z = THREE.MathUtils.lerp(-0.3, -1.4, exp);
       bracketMesh.position.z = THREE.MathUtils.lerp(-0.72, -2.8, exp);
       bracketMesh.position.y = THREE.MathUtils.lerp(0.4, 1.0, exp);
+
+      // Detailed parts + wires follow the same explode value
+      details.setWiresVisible(state.showWires);
+      details.update(
+        exp,
+        delta,
+        state.fanSpeed === 'pause' ? 0 : state.fanSpeed === 'eco' ? 6 : 12
+      );
 
       // 8.2 Blower Turbine Rotation
       let targetRotSpeed = 12;
@@ -744,6 +798,7 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
       streamTexture.dispose();
       shadowTex.dispose();
 
+      details.dispose();
       renderer.dispose();
     };
   }, []);
@@ -759,30 +814,97 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
       <div ref={mountRef} className="w-full h-full absolute inset-0 cursor-grab active:cursor-grabbing" />
 
 
-      {/* Part name labels (positioned each frame from the 3D scene) */}
+      {/* Part name labels (positioned each frame from the 3D scene); click one for details */}
       <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
-        {[
-          ['cover', language === 'roman' ? 'Front Panel (Samne ka Cover)' : 'Front Panel'],
-          ['louver', language === 'roman' ? 'Hawa ka Louver' : 'Air Louver'],
-          ['evaporator', language === 'roman' ? 'Evaporator Coil (Copper)' : 'Evaporator Coil'],
-          ['blower', language === 'roman' ? 'Blower Fan' : 'Blower Fan'],
-          ['pcb', language === 'roman' ? 'Inverter PCB (Electronics)' : 'Inverter PCB'],
-          ['chassis', language === 'roman' ? 'Main Body' : 'Main Chassis'],
-          ['bracket', language === 'roman' ? 'Deewar Bracket' : 'Wall Bracket'],
-        ].map(([key, text]) => (
-          <div
-            key={key}
-            ref={(el) => {
-              labelRefs.current[key] = el;
-            }}
-            className="absolute left-0 top-0 opacity-0 transition-opacity duration-200 will-change-transform"
-          >
-            <div className="px-2 py-1 rounded-lg bg-slate-950/90 border border-cyan-500/60 text-cyan-200 text-[11px] font-bold whitespace-nowrap shadow-lg">
-              {text}
+        {PART_ORDER.map((key) => {
+          const info = PART_INFO[key];
+          const tone =
+            info.unit === 'wiring'
+              ? 'border-amber-400/70 text-amber-200'
+              : info.unit === 'outdoor'
+                ? 'border-emerald-400/70 text-emerald-200'
+                : 'border-cyan-500/60 text-cyan-200';
+          return (
+            <div
+              key={key}
+              ref={(el) => {
+                labelRefs.current[key] = el;
+              }}
+              className="absolute left-0 top-0 opacity-0 transition-opacity duration-200 will-change-transform"
+              style={{ display: showLabels && (info.unit !== 'wiring' || showWires) ? undefined : 'none' }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setActivePart(key);
+                  setActiveHotspot(null);
+                }}
+                className={`pointer-events-auto px-2 py-1 rounded-lg bg-slate-950/90 border text-[10px] sm:text-[11px] font-bold whitespace-nowrap shadow-lg cursor-pointer hover:bg-slate-800 ${tone}`}
+              >
+                {info.name[language]}
+              </button>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      {/* Selected part details card */}
+      {activePart && PART_INFO[activePart] && (
+        <div className="absolute top-24 right-4 sm:right-6 z-30 max-w-xs bg-slate-900/95 border border-cyan-500/50 rounded-2xl p-4 shadow-2xl text-xs space-y-2">
+          <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-2">
+            <div>
+              <div className="font-bold text-cyan-400">{PART_INFO[activePart].name[language]}</div>
+              <div className="text-[10px] uppercase tracking-wide text-slate-500">
+                {PART_INFO[activePart].unit === 'indoor'
+                  ? language === 'roman' ? 'Indoor Unit' : 'Indoor unit'
+                  : PART_INFO[activePart].unit === 'outdoor'
+                    ? language === 'roman' ? 'Outdoor Unit' : 'Outdoor unit'
+                    : language === 'roman' ? 'Wiring / Pipes' : 'Wiring / pipes'}
+              </div>
+            </div>
+            <button onClick={() => setActivePart(null)} className="text-slate-400 hover:text-white cursor-pointer">✕</button>
+          </div>
+          <p className="text-slate-300 leading-relaxed text-[11px]">
+            <span className="font-bold text-white">{language === 'roman' ? 'Kaam: ' : 'What it does: '}</span>
+            {PART_INFO[activePart].does[language]}
+          </p>
+          <p className="text-slate-300 leading-relaxed text-[11px]">
+            <span className="font-bold text-amber-300">{language === 'roman' ? 'Aam masla: ' : 'Common problem: '}</span>
+            {PART_INFO[activePart].fault[language]}
+          </p>
+          {PART_INFO[activePart].service && (
+            <button
+              onClick={() => onOpenBooking(PART_INFO[activePart].service)}
+              className="w-full py-1.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg text-center cursor-pointer transition-colors text-[11px]"
+            >
+              {language === 'roman' ? 'Is Masle Ke Liye Service Book Karein' : 'Book Service For This'}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Wire colour key */}
+      {showWires && (
+        <div className="hidden sm:block absolute top-24 left-6 z-10 pointer-events-none bg-slate-950/70 border border-slate-700 rounded-xl px-3 py-2 text-[10px] text-slate-300 space-y-1">
+          <div className="font-bold text-slate-200">{language === 'roman' ? 'Taaron / Pipes ka Rang' : 'Wire & pipe colours'}</div>
+          {[
+            ['bg-red-500', language === 'roman' ? 'Bijli (live)' : 'Power'],
+            ['bg-blue-500', language === 'roman' ? 'Control / signal' : 'Control / signal'],
+            ['bg-yellow-400', language === 'roman' ? 'Motor control' : 'Motor control'],
+            ['bg-green-500', language === 'roman' ? 'Sensors' : 'Sensors'],
+            ['bg-lime-500', language === 'roman' ? 'Earth' : 'Earth'],
+            ['bg-orange-500', language === 'roman' ? 'Copper pipe' : 'Copper pipe'],
+            ['bg-gray-800 border border-slate-500', language === 'roman' ? 'Insulated gas pipe' : 'Insulated gas pipe'],
+            ['bg-sky-300', language === 'roman' ? 'Drain hose' : 'Drain hose'],
+          ].map(([cls, text]) => (
+            <div key={text} className="flex items-center gap-2">
+              <span className={`inline-block w-3 h-1.5 rounded ${cls}`} />
+              <span>{text}</span>
+            </div>
+          ))}
+          <div className="text-slate-500">{language === 'roman' ? 'Rang sirf misaal hain' : 'Colours are illustrative'}</div>
+        </div>
+      )}
 
       {/* Big one-click Explode / Assemble + 360 auto-spin */}
       <div className="absolute top-16 left-4 sm:top-auto sm:bottom-40 sm:left-6 z-20 flex flex-col gap-2">
@@ -810,6 +932,46 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
           <Orbit className="w-4 h-4" />
           <span>{autoSpin ? (language === 'roman' ? '360° Ruko' : 'Stop 360° Spin') : (language === 'roman' ? '360° Ghumayein' : 'Auto 360° Spin')}</span>
         </button>
+
+        <div className="flex gap-1.5">
+          {([
+            ['indoor', language === 'roman' ? 'Indoor' : 'Indoor'],
+            ['outdoor', language === 'roman' ? 'Outdoor' : 'Outdoor'],
+            ['system', language === 'roman' ? 'Poora AC' : 'Full AC'],
+          ] as Array<[CameraPreset, string]>).map(([id, text]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => handleSelectPreset(id)}
+              className="px-2.5 py-1.5 rounded-lg bg-slate-900/90 border border-slate-600 text-[11px] font-bold text-slate-200 hover:bg-slate-800 cursor-pointer"
+            >
+              {text}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex gap-1.5">
+          <button
+            type="button"
+            onClick={() => setShowWires((v) => !v)}
+            className={`px-2.5 py-1.5 rounded-lg border text-[11px] font-bold flex items-center gap-1 cursor-pointer ${
+              showWires ? 'bg-amber-400 text-slate-950 border-amber-300' : 'bg-slate-900/90 text-slate-300 border-slate-600'
+            }`}
+          >
+            <Cable className="w-3.5 h-3.5" />
+            <span>{language === 'roman' ? 'Wiring' : 'Wiring'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowLabels((v) => !v)}
+            className={`px-2.5 py-1.5 rounded-lg border text-[11px] font-bold flex items-center gap-1 cursor-pointer ${
+              showLabels ? 'bg-cyan-500 text-slate-950 border-cyan-300' : 'bg-slate-900/90 text-slate-300 border-slate-600'
+            }`}
+          >
+            <Tags className="w-3.5 h-3.5" />
+            <span>{language === 'roman' ? 'Naam' : 'Labels'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Top Left Title & Live Telemetry Badge (Unobtrusive) */}
