@@ -45,11 +45,10 @@ export const HomePage: React.FC<HomePageProps> = ({
 }) => {
   const t = translations[language];
 
-  const [activeHeroVideo, setActiveHeroVideo] = React.useState(0);
   const heroVideos = [
-    { title: 'Service Video 1', src: 'https://videotourl.com/videos/1793047867316-9c0752b3-75e0-4adc-bc7d-da2383dbac94.mp4' },
-    { title: 'Service Video 2', src: 'https://videotourl.com/videos/1793048093193-948f935a-0c21-40af-87d4-63332d582072.mp4' },
-    { title: 'Service Video 3', src: 'https://videotourl.com/videos/1793048153474-bb4d216b-e515-4d7c-93ec-2a0ed40c0736.mp4' },
+    { title: 'Service Video 1', label: 'VIDEO 01', src: 'https://videotourl.com/videos/1793047867316-9c0752b3-75e0-4adc-bc7d-da2383dbac94.mp4' },
+    { title: 'Service Video 2', label: 'VIDEO 02', src: 'https://videotourl.com/videos/1793048093193-948f935a-0c21-40af-87d4-63332d582072.mp4' },
+    { title: 'Service Video 3', label: 'VIDEO 03', src: 'https://videotourl.com/videos/1793048153474-bb4d216b-e515-4d7c-93ec-2a0ed40c0736.mp4' },
   ];
 
   const quickProblems = language === 'roman' ? [
@@ -153,58 +152,6 @@ export const HomePage: React.FC<HomePageProps> = ({
 
             {/* Right: Featured Service Videos & Quick Diagnostic Trigger */}
             <div className="lg:col-span-5 flex flex-col gap-4 animate-hero-media">
-              <div className="relative rounded-2xl overflow-hidden border border-cyan-800/70 bg-slate-950 shadow-2xl card-interactive">
-                <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-800 bg-slate-900/95">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shrink-0">
-                      <Film className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="font-bold text-white text-sm">
-                        {language === 'roman' ? 'Hamari Service Videos' : 'Our Service Videos'}
-                      </div>
-                      <div className="text-[11px] text-slate-400">
-                        {language === 'roman' ? 'Video select karke dekhein' : 'Select a video to watch'}
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-300 bg-cyan-950 px-2 py-1 rounded-md border border-cyan-800 shrink-0">
-                    {String(activeHeroVideo + 1).padStart(2, '0')} / 03
-                  </span>
-                </div>
-
-                <video
-                  key={heroVideos[activeHeroVideo].src}
-                  src={heroVideos[activeHeroVideo].src}
-                  controls
-                  playsInline
-                  preload="metadata"
-                  className="w-full aspect-video bg-black object-contain"
-                  aria-label={heroVideos[activeHeroVideo].title}
-                />
-
-                <div className="grid grid-cols-3 gap-2 p-3 bg-slate-900/80">
-                  {heroVideos.map((video, index) => (
-                    <button
-                      key={video.src}
-                      type="button"
-                      onClick={() => setActiveHeroVideo(index)}
-                      aria-pressed={activeHeroVideo === index}
-                      className={`rounded-xl border px-2 py-2.5 text-left transition-all cursor-pointer ${activeHeroVideo === index
-                        ? 'border-cyan-400 bg-cyan-950/80 text-white shadow-md shadow-cyan-950/40'
-                        : 'border-slate-700 bg-slate-800/70 text-slate-300 hover:border-cyan-700 hover:bg-slate-800'}`}
-                    >
-                      <span className="block text-[10px] font-extrabold tracking-wider text-cyan-300">
-                        VIDEO 0{index + 1}
-                      </span>
-                      <span className="mt-1 block text-[10px] leading-tight">
-                        {language === 'roman' ? 'Play karein' : 'Watch video'}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Quick Issue Selector Widget with Animated Buttons */}
               <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700/80 rounded-2xl p-5 shadow-xl">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-700 mb-3">
@@ -246,9 +193,46 @@ export const HomePage: React.FC<HomePageProps> = ({
                   })}
                 </div>
               </div>
-
             </div>
+          </div>
 
+          {/* Three separate hero video players */}
+          <div className="mt-10 sm:mt-12">
+            <div className="max-w-3xl mx-auto text-center mb-5 sm:mb-7">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950 border border-cyan-800 text-cyan-300 text-[10px] sm:text-xs font-extrabold uppercase tracking-wider mb-2">
+                <Film className="w-3.5 h-3.5" />
+                <span>{language === 'roman' ? 'Hamari Service Videos' : 'Our Service Videos'}</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-extrabold text-white font-display">
+                {language === 'roman' ? 'Teeno Videos Alag Alag Dekhein' : 'Watch All Three Videos Separately'}
+              </h2>
+              <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-300">
+                {language === 'roman' ? 'Har video ka apna player hai—jis video ko dekhna ho usay alag play karein.' : 'Each video has its own player, so you can play any video independently.'}
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+              {heroVideos.map((video, index) => (
+                <article key={video.src} className="min-w-0 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900/90 shadow-xl">
+                  <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-700/80">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/15 border border-cyan-400/30 text-[11px] font-extrabold text-cyan-300 shrink-0">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-bold text-white">{video.title}</h3>
+                      <p className="text-[10px] uppercase tracking-wider text-slate-400">{video.label}</p>
+                    </div>
+                  </div>
+                  <video
+                    src={video.src}
+                    controls
+                    playsInline
+                    preload="metadata"
+                    className="block w-full aspect-video bg-black object-contain"
+                    aria-label={video.title}
+                  />
+                </article>
+              ))}
+            </div>
           </div>
         </div>
       </section>
