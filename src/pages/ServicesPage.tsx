@@ -12,13 +12,11 @@ import {
   AlertCircle,
   Scale,
   Zap,
-  Info,
-  Film
+  Info
 } from 'lucide-react';
 import { Language } from '../data/translations';
 import { DEMO_IMAGES } from '../constants/images';
 import { servicesData } from '../data/mockData';
-import { ServiceVideoShowcase } from '../components/video/ServiceVideoShowcase';
 import { ScrollReveal } from '../components/common/ScrollReveal';
 
 interface ServicesPageProps {
@@ -198,19 +196,6 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({ language, onOpenBook
                     </div>
 
                     <div className="flex items-center gap-2 w-full sm:w-auto">
-                      {['ac-general-service', 'ac-cooling-issue', 'inverter-pcb-repair'].includes(service.id) && (
-                        <button
-                          onClick={() => {
-                            const elem = document.getElementById('service-videos');
-                            if (elem) elem.scrollIntoView({ behavior: 'smooth' });
-                          }}
-                          className="btn-animated flex-1 sm:flex-none px-4 py-2.5 bg-cyan-100 hover:bg-cyan-200 text-cyan-900 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                          title="Watch Ad Video"
-                        >
-                          <Film className="w-3.5 h-3.5 text-cyan-700" />
-                          <span>{language === 'roman' ? 'Video Ad' : 'Watch Ad'}</span>
-                        </button>
-                      )}
 
                       <button
                         onClick={() => onOpenBooking(service.id)}
@@ -225,16 +210,6 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({ language, onOpenBook
               </ScrollReveal>
             );
           })}
-        </div>
-
-        {/* 3 Live Service Video Ads */}
-        <div id="service-videos">
-          <ScrollReveal animation="fade-up">
-            <ServiceVideoShowcase
-              language={language}
-              onOpenBooking={onOpenBooking}
-            />
-          </ScrollReveal>
         </div>
 
         {/* Bottom Help Banner */}
