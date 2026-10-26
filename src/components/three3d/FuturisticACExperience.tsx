@@ -134,6 +134,13 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
+    // Keep touch gestures inside the 3D viewer. Without this, mobile browsers
+    // may treat a finger drag as page scrolling and interrupt model inspection.
+    controls.enablePan = false;
+    controls.touches.ONE = THREE.TOUCH.ROTATE;
+    controls.touches.TWO = THREE.TOUCH.DOLLY_ROTATE;
+    renderer.domElement.style.touchAction = 'none';
+    renderer.domElement.style.webkitTapHighlightColor = 'transparent';
     controls.minDistance = 3.2;
     controls.maxDistance = 14;
     controls.maxPolarAngle = Math.PI / 2 + 0.15; // Don't flip under ground
