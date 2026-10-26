@@ -26,9 +26,9 @@ export const VideosPage: React.FC<VideosPageProps> = ({ settings, language, onOp
             </h1>
             <p className="mt-3 text-slate-300 text-sm sm:text-base leading-relaxed">
               {language === 'roman'
-                ? 'Purani 3 videos hata di gayi hain. Nayi videos har relevant service ke saath alag se add hongi—sab videos ek jagah mix nahi hongi.'
-                : 'The previous three videos have been removed. New videos will be placed with their relevant services instead of mixing every video into one gallery.'}
-            </p>
+                ? 'Har service ki video ab usi service ke card ke andar dekhein.'
+                : 'Each service video is now shown inside its relevant service card.'}
+</p>
           </div>
         </ScrollReveal>
 
@@ -38,13 +38,22 @@ export const VideosPage: React.FC<VideosPageProps> = ({ settings, language, onOp
               <Film className="h-8 w-8" />
             </div>
             <h2 className="text-xl sm:text-2xl font-bold font-display">
-              {language === 'roman' ? 'Nayi Service Videos Jald Add Hongi' : 'New Service Videos Coming Soon'}
-            </h2>
+              {language === 'roman' ? 'Service ke mutabiq video dekhein' : 'Watch videos by service'}
+</h2>
             <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-slate-300">
               {language === 'roman'
-                ? 'Jab nayi videos mil jayengi, har video usi service ke section mein dikhai jayegi jiske liye woh banayi gayi hai.'
-                : 'Once the new videos are provided, each one will appear in the matching service section.'}
-            </p>
+                ? 'Videos ko aik hi gallery mein mix nahi kiya gaya. Service cards mein neeche ja kar mutaliqa video play karein.'
+                : 'Videos are not mixed into one gallery. Open the Services page and play the video inside the matching service card.'}
+</p>
+          </div>
+          <div className="mt-6 flex justify-center">
+            <a
+              href="#services"
+              className="btn-animated btn-glow-cyan inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-6 py-3 text-sm font-bold text-slate-950 shadow-md hover:bg-cyan-300"
+            >
+              {language === 'roman' ? 'Tamam Services aur Videos Dekhein' : 'Browse Services & Videos'}
+              <ArrowRight className="w-4 h-4" />
+            </a>
           </div>
         </ScrollReveal>
 
