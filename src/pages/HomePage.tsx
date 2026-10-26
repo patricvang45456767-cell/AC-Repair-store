@@ -23,7 +23,6 @@ import { DEMO_IMAGES } from '../constants/images';
 import { createTelUrl, createWhatsAppUrl } from '../lib/utils';
 import { TestimonialsSection } from '../components/sections/TestimonialsSection';
 import { FAQAccordion } from '../components/sections/FAQAccordion';
-import { ServiceVideoShowcase } from '../components/video/ServiceVideoShowcase';
 import { FuturisticACExperience } from '../components/three3d/FuturisticACExperience';
 import { FuturisticBackgroundField } from '../components/three3d/FuturisticBackgroundField';
 import { ScrollReveal } from '../components/common/ScrollReveal';
@@ -440,14 +439,6 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
         </ScrollReveal>
       </section>
-
-      {/* 3 Dedicated Service Video Ads Showcase */}
-      <div id="videos">
-        <ServiceVideoShowcase
-          language={language}
-          onOpenBooking={onOpenBooking}
-        />
-      </div>
 
       {/* Futuristic 3D Interactive Inverter AC Hologram Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
