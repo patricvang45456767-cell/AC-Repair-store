@@ -224,9 +224,12 @@ export const HomePage: React.FC<HomePageProps> = ({
                   </div>
                   <video
                     src={video.src}
+                    autoPlay
+                    muted
+                    loop
                     controls
                     playsInline
-                    preload="metadata"
+                    preload="auto"
                     className="block w-full aspect-video bg-black object-contain"
                     aria-label={video.title}
                   />
