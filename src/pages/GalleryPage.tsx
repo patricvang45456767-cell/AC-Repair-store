@@ -46,11 +46,27 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({ language, onOpenBookin
     },
     {
       title: language === 'roman' ? 'Laser-Level AC Installation & Piping' : 'Modern Split AC Installation & Vacuuming',
-      image: DEMO_IMAGES.cleanModernAc,
+      image: DEMO_IMAGES.acInstallation,
       category: 'Installation',
       before: language === 'roman' ? 'Aam technician ne purana AC kholte waqt gas uda di thi aur indoor unit tedha laga dia tha jisse pani tapak raha tha.' : 'Improper non-level mounting causing indoor water pooling and vibration hum.',
       after: language === 'roman' ? 'Laser spirit level se mounting, pure copper pipe routing aur two-stage vacuum pump se 500 microns deep evacuation.' : 'Laser balanced indoor bracket; flawless drainage slope and whisper-quiet operation.',
       tag: '100% Pure Copper'
+    },
+    {
+      title: language === 'roman' ? 'Andar Pani Tapakne Ka Hal' : 'Indoor AC Water-Leak Diagnosis',
+      image: DEMO_IMAGES.waterLeakage,
+      category: 'Water Leakage',
+      before: language === 'roman' ? 'Drain pipe block honay ya unit ka level theek na honay se deewar par pani tapak raha tha.' : 'A blocked drain or incorrect indoor-unit level caused water to drip down the wall.',
+      after: language === 'roman' ? 'Drain line saaf kar ke slope aur tray check ki, phir controlled water-flow test se drainage verify ki.' : 'The drain path, slope, and tray were checked, then verified with a controlled water-flow test.',
+      tag: 'Drainage Restored'
+    },
+    {
+      title: language === 'roman' ? 'Commercial HVAC Preventive Service' : 'Commercial HVAC Preventive Maintenance',
+      image: DEMO_IMAGES.commercialHvac,
+      category: 'Commercial HVAC',
+      before: language === 'roman' ? 'Heavy-use condenser coils par mitti jamne se airflow aur cooling performance kam ho rahi thi.' : 'Dust-loaded condenser coils were restricting airflow and reducing cooling performance.',
+      after: language === 'roman' ? 'Coils, airflow, electrical connections aur operating readings inspect kar ke service report tayyar ki.' : 'Coils, airflow, electrical connections, and operating readings were inspected and documented.',
+      tag: 'System Health Check'
     },
   ];
 
