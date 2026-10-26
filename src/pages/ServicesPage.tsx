@@ -51,8 +51,14 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({ language, onOpenBook
         return DEMO_IMAGES.gasLeakRepair;
       case 'inverter-pcb-repair':
         return DEMO_IMAGES.inverterPcbRepair;
+      case 'ac-water-leakage':
+        return DEMO_IMAGES.waterLeakage;
       case 'ac-installation':
-        return DEMO_IMAGES.cleanModernAc;
+        return DEMO_IMAGES.acInstallation;
+      case 'ac-uninstallation':
+        return DEMO_IMAGES.acUninstallation;
+      case 'commercial-hvac':
+        return DEMO_IMAGES.commercialHvac;
       default:
         return DEMO_IMAGES.heroTechnician;
     }
