@@ -385,7 +385,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <div>
                 <div className="relative h-48 overflow-hidden bg-slate-100">
                   <img
-                    src={DEMO_IMAGES.cleanModernAc}
+                    src={DEMO_IMAGES.acInstallation}
                     alt="Precision AC Installation and Copper Piping"
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
