@@ -510,6 +510,7 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
     const dragPlane = new THREE.Plane();
     const dragPlaneNormal = new THREE.Vector3();
     const dragStartPoint = new THREE.Vector3();
+    const dragCurrentPoint = new THREE.Vector3();
     const dragStartOffset = new THREE.Vector3();
     let draggedPart: THREE.Group | null = null;
 
@@ -532,11 +533,14 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
         if (node && draggableParts.has(node as THREE.Group)) {
           draggedPart = node as THREE.Group;
           controls.enabled = false;
-          renderer.domElement.setPointerCapture(event.pointerId);
-          draggedPart.getWorldPosition(dragStartPoint);
+          draggedPart.getWorldPosition(dragCurrentPoint);
           camera.getWorldDirection(dragPlaneNormal);
-          dragPlane.setFromNormalAndCoplanarPoint(dragPlaneNormal, dragStartPoint);
-          raycaster.ray.intersectPlane(dragPlane, dragStartPoint);
+          dragPlane.setFromNormalAndCoplanarPoint(dragPlaneNormal, dragCurrentPoint);
+          if (!raycaster.ray.intersectPlane(dragPlane, dragStartPoint)) {
+            draggedPart = null;
+            controls.enabled = true;
+            continue;
+          }
           dragStartOffset.copy(partOffsets.get(draggedPart)!);
           event.preventDefault();
           return;
@@ -547,10 +551,10 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
     const handlePartPointerMove = (event: PointerEvent) => {
       if (!draggedPart) return;
       updatePointerRay(event);
-      const point = new THREE.Vector3();
-      if (!raycaster.ray.intersectPlane(dragPlane, point)) return;
+      if (!raycaster.ray.intersectPlane(dragPlane, dragCurrentPoint)) return;
       const offset = partOffsets.get(draggedPart)!;
-      offset.copy(dragStartOffset).add(point.sub(dragStartPoint));
+      offset.copy(dragStartOffset).add(dragCurrentPoint.sub(dragStartPoint));
+      event.preventDefault();
     };
 
     const handlePartPointerUp = () => {
@@ -560,9 +564,11 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
     };
 
     renderer.domElement.addEventListener('pointerdown', handlePartPointerDown);
-    renderer.domElement.addEventListener('pointermove', handlePartPointerMove);
-    renderer.domElement.addEventListener('pointerup', handlePartPointerUp);
-    renderer.domElement.addEventListener('pointercancel', handlePartPointerUp);
+    // Listen on window for move/release so dragging remains active if the finger
+    // briefly leaves the canvas or pointer capture behaves inconsistently on mobile.
+    window.addEventListener('pointermove', handlePartPointerMove, { passive: false });
+    window.addEventListener('pointerup', handlePartPointerUp);
+    window.addEventListener('pointercancel', handlePartPointerUp);
 
     const applyPartPosition = (part: THREE.Group, x: number, y: number, z: number) => {
       const offset = partOffsets.get(part)!;
@@ -702,9 +708,9 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
       renderer.domElement.removeEventListener('pointerdown', handlePartPointerDown);
-      renderer.domElement.removeEventListener('pointermove', handlePartPointerMove);
-      renderer.domElement.removeEventListener('pointerup', handlePartPointerUp);
-      renderer.domElement.removeEventListener('pointercancel', handlePartPointerUp);
+      window.removeEventListener('pointermove', handlePartPointerMove);
+      window.removeEventListener('pointerup', handlePartPointerUp);
+      window.removeEventListener('pointercancel', handlePartPointerUp);
       controls.dispose();
 
       if (container && renderer.domElement && container.contains(renderer.domElement)) {
