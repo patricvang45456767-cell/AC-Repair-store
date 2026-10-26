@@ -14,7 +14,8 @@ import {
   Scale,
   Award,
   ChevronRight,
-  Box
+  Box,
+  Film
 } from 'lucide-react';
 import { SiteSettings } from '../types';
 import { Language, translations } from '../data/translations';
@@ -43,6 +44,13 @@ export const HomePage: React.FC<HomePageProps> = ({
   onSelectQuickSymptom,
 }) => {
   const t = translations[language];
+
+  const [activeHeroVideo, setActiveHeroVideo] = React.useState(0);
+  const heroVideos = [
+    { title: 'Service Video 1', src: 'https://videotourl.com/videos/1793047867316-9c0752b3-75e0-4adc-bc7d-da2383dbac94.mp4' },
+    { title: 'Service Video 2', src: 'https://videotourl.com/videos/1793048093193-948f935a-0c21-40af-87d4-63332d582072.mp4' },
+    { title: 'Service Video 3', src: 'https://videotourl.com/videos/1793048153474-bb4d216b-e515-4d7c-93ec-2a0ed40c0736.mp4' },
+  ];
 
   const quickProblems = language === 'roman' ? [
     { label: 'Thandi Hawa Nahi Aarahi', symptom: 'AC chal raha hai lekin thandi hawa nahi arahi, compressor trip ho raha hai', icon: Snowflake, service: 'ac-cooling-issue' },
@@ -143,31 +151,57 @@ export const HomePage: React.FC<HomePageProps> = ({
               </div>
             </div>
 
-            {/* Right: Demo Image Showcase & Quick Diagnostic Trigger */}
+            {/* Right: Featured Service Videos & Quick Diagnostic Trigger */}
             <div className="lg:col-span-5 flex flex-col gap-4 animate-hero-media">
-              <div className="relative rounded-2xl overflow-hidden border border-slate-700/80 shadow-2xl group card-interactive">
-                <img
-                  src={DEMO_IMAGES.heroTechnician}
-                  alt="ABC Air Care Certified HVAC Technician with Manifold Gauge"
-                  referrerPolicy="no-referrer"
-                  className="w-full h-72 sm:h-80 object-cover group-hover:scale-108 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
-                
-                {/* Floating Tag over Image with Cyan Glow Aura */}
-                <div className="absolute bottom-4 left-4 right-4 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl p-3 text-xs flex items-center justify-between shadow-xl">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-cyan-600 flex items-center justify-center text-white shrink-0 shadow-md shadow-cyan-600/40">
-                      <Wrench className="w-4 h-4" />
+              <div className="relative rounded-2xl overflow-hidden border border-cyan-800/70 bg-slate-950 shadow-2xl card-interactive">
+                <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-800 bg-slate-900/95">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shrink-0">
+                      <Film className="w-4 h-4" />
                     </div>
-                    <div>
-                      <div className="font-bold text-white">ABC Field Inspection Fleet</div>
-                      <div className="text-[11px] text-slate-400">Digital Manifold Testing • 350 PSI Nitrogen</div>
+                    <div className="min-w-0">
+                      <div className="font-bold text-white text-sm">
+                        {language === 'roman' ? 'Hamari Service Videos' : 'Our Service Videos'}
+                      </div>
+                      <div className="text-[11px] text-slate-400">
+                        {language === 'roman' ? 'Video select karke dekhein' : 'Select a video to watch'}
+                      </div>
                     </div>
                   </div>
-                  <span className="animate-cyan-glow text-[10px] font-bold text-cyan-300 bg-cyan-950 px-2 py-1 rounded-md border border-cyan-800">
-                    Live Dispatch
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-300 bg-cyan-950 px-2 py-1 rounded-md border border-cyan-800 shrink-0">
+                    {String(activeHeroVideo + 1).padStart(2, '0')} / 03
                   </span>
+                </div>
+
+                <video
+                  key={heroVideos[activeHeroVideo].src}
+                  src={heroVideos[activeHeroVideo].src}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="w-full aspect-video bg-black object-contain"
+                  aria-label={heroVideos[activeHeroVideo].title}
+                />
+
+                <div className="grid grid-cols-3 gap-2 p-3 bg-slate-900/80">
+                  {heroVideos.map((video, index) => (
+                    <button
+                      key={video.src}
+                      type="button"
+                      onClick={() => setActiveHeroVideo(index)}
+                      aria-pressed={activeHeroVideo === index}
+                      className={`rounded-xl border px-2 py-2.5 text-left transition-all cursor-pointer ${activeHeroVideo === index
+                        ? 'border-cyan-400 bg-cyan-950/80 text-white shadow-md shadow-cyan-950/40'
+                        : 'border-slate-700 bg-slate-800/70 text-slate-300 hover:border-cyan-700 hover:bg-slate-800'}`}
+                    >
+                      <span className="block text-[10px] font-extrabold tracking-wider text-cyan-300">
+                        VIDEO 0{index + 1}
+                      </span>
+                      <span className="mt-1 block text-[10px] leading-tight">
+                        {language === 'roman' ? 'Play karein' : 'Watch video'}
+                      </span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
