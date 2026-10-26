@@ -12,12 +12,42 @@ import {
   AlertCircle,
   Scale,
   Zap,
-  Info
+  Info,
+  Film
 } from 'lucide-react';
 import { Language } from '../data/translations';
 import { DEMO_IMAGES } from '../constants/images';
 import { servicesData } from '../data/mockData';
 import { ScrollReveal } from '../components/common/ScrollReveal';
+
+type ServiceVideo = { id: number; src: string; kind: 'file' | 'hosted' };
+
+const serviceVideos: Record<string, ServiceVideo[]> = {
+  'ac-cooling-issue': [
+    { id: 1, kind: 'file', src: 'https://videotourl.com/videos/1793047867316-9c0752b3-75e0-4adc-bc7d-da2383dbac94.mp4' },
+    { id: 8, kind: 'hosted', src: 'https://videotourl.net/v/74ba3e9b-4e10-4d04-b6bb-5608b9ef225d' },
+  ],
+  'ac-general-service': [
+    { id: 2, kind: 'file', src: 'https://videotourl.com/videos/1793048093193-948f935a-0c21-40af-87d4-63332d582072.mp4' },
+    { id: 9, kind: 'hosted', src: 'https://videotourl.net/v/79044965-06f0-46b6-b93c-eef083e6b219' },
+  ],
+  'ac-water-leakage': [
+    { id: 3, kind: 'file', src: 'https://videotourl.com/videos/1793048153474-bb4d216b-e515-4d7c-93ec-2a0ed40c0736.mp4' },
+    { id: 10, kind: 'hosted', src: 'https://videotourl.net/v/985c847c-a13e-4cf6-9659-f43397e3f73f' },
+  ],
+  'inverter-pcb-repair': [
+    { id: 4, kind: 'file', src: 'https://videotourl.com/videos/1793048187722-b2027e65-32d1-4718-a662-0586c16788ae.mp4' },
+  ],
+  'ac-installation': [
+    { id: 5, kind: 'file', src: 'https://videotourl.com/videos/1793048225073-68ddc98d-6f9d-4909-9a54-c70d899b8d45.mp4' },
+  ],
+  'ac-uninstallation': [
+    { id: 6, kind: 'file', src: 'https://videotourl.com/videos/1793048254829-55250bdf-7ad9-4338-9fe2-87372444551c.mp4' },
+  ],
+  'commercial-hvac': [
+    { id: 7, kind: 'file', src: 'https://videotourl.com/videos/1793048285642-00ec5f50-370b-4b8a-a12e-9ddee1823166.mp4' },
+  ],
+};
 
 interface ServicesPageProps {
   language: Language;
@@ -184,6 +214,45 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({ language, onOpenBook
                           <span>{service.priceNote}</span>
                         </div>
                       </div>
+
+                      {/* Keep each supplied video inside a service card, not one shared gallery */}
+                      {serviceVideos[service.id]?.length ? (
+                        <div className="pt-5 border-t border-slate-200 space-y-3">
+                          <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                            <Film className="w-4 h-4 text-cyan-600" />
+                            <span>{language === 'roman' ? 'Is Service Ki Videos' : 'Videos for This Service'}</span>
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {serviceVideos[service.id].map((video) => (
+                              <div key={video.id} className="overflow-hidden rounded-xl border border-slate-200 bg-slate-950 shadow-sm">
+                                <div className="px-3 py-2 text-[11px] font-bold text-cyan-300 bg-slate-900 border-b border-slate-800">
+                                  {language === 'roman' ? 'Service Video' : 'Service Video'} {video.id}
+                                </div>
+                                {video.kind === 'file' ? (
+                                  <video
+                                    src={video.src}
+                                    controls
+                                    playsInline
+                                    preload="none"
+                                    className="w-full aspect-video bg-black object-contain"
+                                    aria-label={`Service video ${video.id}`}
+                                  />
+                                ) : (
+                                  <iframe
+                                    src={video.src}
+                                    title={`Service video ${video.id}`}
+                                    loading="lazy"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    allowFullScreen
+                                    referrerPolicy="strict-origin-when-cross-origin"
+                                    className="w-full aspect-video bg-black"
+                                  />
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
 
                     </div>
                   </div>
