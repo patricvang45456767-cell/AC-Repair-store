@@ -498,6 +498,77 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
     shadowPlane.position.set(0, -1.35, 0.1);
     acRootGroup.add(shadowPlane);
 
+    // Allow users to drag individual AC components in exploded/X-Ray mode.
+    // User offsets are kept separately so the animation loop never overwrites a drag.
+    const draggableParts = new Set<THREE.Group>([
+      frontCoverGroup, louverGroup, evaporatorGroup, blowerGroup, pcbGroup,
+    ]);
+    const partOffsets = new Map<THREE.Group, THREE.Vector3>();
+    draggableParts.forEach((part) => partOffsets.set(part, new THREE.Vector3()));
+    const raycaster = new THREE.Raycaster();
+    const pointerNdc = new THREE.Vector2();
+    const dragPlane = new THREE.Plane();
+    const dragPlaneNormal = new THREE.Vector3();
+    const dragStartPoint = new THREE.Vector3();
+    const dragStartOffset = new THREE.Vector3();
+    let draggedPart: THREE.Group | null = null;
+
+    const updatePointerRay = (event: PointerEvent) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointerNdc.set(
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        -((event.clientY - rect.top) / rect.height) * 2 + 1,
+      );
+      raycaster.setFromCamera(pointerNdc, camera);
+    };
+
+    const handlePartPointerDown = (event: PointerEvent) => {
+      if (sceneStateRef.current.viewMode !== 'exploded') return;
+      updatePointerRay(event);
+      const hits = raycaster.intersectObject(acRootGroup, true);
+      for (const hit of hits) {
+        let node: THREE.Object3D | null = hit.object;
+        while (node && node.parent !== acRootGroup) node = node.parent;
+        if (node && draggableParts.has(node as THREE.Group)) {
+          draggedPart = node as THREE.Group;
+          controls.enabled = false;
+          renderer.domElement.setPointerCapture(event.pointerId);
+          draggedPart.getWorldPosition(dragStartPoint);
+          camera.getWorldDirection(dragPlaneNormal);
+          dragPlane.setFromNormalAndCoplanarPoint(dragPlaneNormal, dragStartPoint);
+          raycaster.ray.intersectPlane(dragPlane, dragStartPoint);
+          dragStartOffset.copy(partOffsets.get(draggedPart)!);
+          event.preventDefault();
+          return;
+        }
+      }
+    };
+
+    const handlePartPointerMove = (event: PointerEvent) => {
+      if (!draggedPart) return;
+      updatePointerRay(event);
+      const point = new THREE.Vector3();
+      if (!raycaster.ray.intersectPlane(dragPlane, point)) return;
+      const offset = partOffsets.get(draggedPart)!;
+      offset.copy(dragStartOffset).add(point.sub(dragStartPoint));
+    };
+
+    const handlePartPointerUp = () => {
+      if (!draggedPart) return;
+      draggedPart = null;
+      controls.enabled = true;
+    };
+
+    renderer.domElement.addEventListener('pointerdown', handlePartPointerDown);
+    renderer.domElement.addEventListener('pointermove', handlePartPointerMove);
+    renderer.domElement.addEventListener('pointerup', handlePartPointerUp);
+    renderer.domElement.addEventListener('pointercancel', handlePartPointerUp);
+
+    const applyPartPosition = (part: THREE.Group, x: number, y: number, z: number) => {
+      const offset = partOffsets.get(part)!;
+      part.position.set(x + offset.x, y + offset.y, z + offset.z);
+    };
+
     // 6. Pre-allocate math helpers to avoid per-frame GC allocations
     const _vec3 = new THREE.Vector3();
 
@@ -535,23 +606,19 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
       const exp = state.currentExploded;
 
       // Front cover moves forward on Z
-      frontCoverGroup.position.z = THREE.MathUtils.lerp(0, 1.4, exp);
-      frontCoverGroup.position.y = THREE.MathUtils.lerp(0, 0.2, exp);
+      applyPartPosition(frontCoverGroup, 0, THREE.MathUtils.lerp(0, 0.2, exp), THREE.MathUtils.lerp(0, 1.4, exp));
 
       // Louver shifts downward
-      louverGroup.position.y = THREE.MathUtils.lerp(-0.55, -1.0, exp);
-      louverGroup.position.z = THREE.MathUtils.lerp(0.35, 0.9, exp);
+      applyPartPosition(louverGroup, 0, THREE.MathUtils.lerp(-0.55, -1.0, exp), THREE.MathUtils.lerp(0.35, 0.9, exp));
 
       // Evaporator core moves forward & up
-      evaporatorGroup.position.z = THREE.MathUtils.lerp(0.05, 0.5, exp);
+      applyPartPosition(evaporatorGroup, 0, 0.1, THREE.MathUtils.lerp(0.05, 0.5, exp));
 
       // Blower turbine drops forward and down
-      blowerGroup.position.y = THREE.MathUtils.lerp(-0.35, -0.7, exp);
-      blowerGroup.position.z = THREE.MathUtils.lerp(-0.05, 0.4, exp);
+      applyPartPosition(blowerGroup, 0, THREE.MathUtils.lerp(-0.35, -0.7, exp), THREE.MathUtils.lerp(-0.05, 0.4, exp));
 
       // Inverter PCB glides right & pivots outward
-      pcbGroup.position.x = THREE.MathUtils.lerp(2.0, 3.1, exp);
-      pcbGroup.position.z = THREE.MathUtils.lerp(0.1, 0.7, exp);
+      applyPartPosition(pcbGroup, THREE.MathUtils.lerp(2.0, 3.1, exp), 0, THREE.MathUtils.lerp(0.1, 0.7, exp));
       pcbGroup.rotation.y = THREE.MathUtils.lerp(0, -Math.PI / 5, exp);
 
       // 8.2 Blower Turbine Rotation
@@ -634,6 +701,10 @@ export const FuturisticACExperience: React.FC<FuturisticACExperienceProps> = ({
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
+      renderer.domElement.removeEventListener('pointerdown', handlePartPointerDown);
+      renderer.domElement.removeEventListener('pointermove', handlePartPointerMove);
+      renderer.domElement.removeEventListener('pointerup', handlePartPointerUp);
+      renderer.domElement.removeEventListener('pointercancel', handlePartPointerUp);
       controls.dispose();
 
       if (container && renderer.domElement && container.contains(renderer.domElement)) {
