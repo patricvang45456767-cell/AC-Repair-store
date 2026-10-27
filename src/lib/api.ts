@@ -104,8 +104,9 @@ function countStatuses(items: ServiceRequest[]): Record<string, number> {
   };
 }
 
-// 1. Submit a service request directly to the production Supabase database.
-// The database insert policy ensures public submissions cannot set admin-only fields.
+// Submit directly to Supabase. Do not request the inserted row back: public visitors
+// intentionally have no SELECT permission on customer bookings, and INSERT ... RETURNING
+// would be rejected by RLS. Generate the reference before insert and return it to the visitor.
 export async function submitServiceRequest(payload: SubmitRequestPayload): Promise<{
   success: boolean;
   refCode: string;
@@ -114,11 +115,7 @@ export async function submitServiceRequest(payload: SubmitRequestPayload): Promi
 }> {
   try {
     if (payload.honeypot) {
-      return {
-        success: false,
-        refCode: '',
-        message: 'Invalid submission.',
-      };
+      return { success: false, refCode: '', message: 'Invalid submission.' };
     }
     if (!payload.consentGiven) {
       return {
@@ -155,8 +152,10 @@ export async function submitServiceRequest(payload: SubmitRequestPayload): Promi
     const safeTimeWindow = allowedTimeWindows.includes(payload.preferredTimeWindow || '')
       ? payload.preferredTimeWindow
       : 'anytime';
+    const refCode = `SR-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
     const insertPayload = {
+      ref_code: refCode,
       customer_name: payload.customerName.trim(),
       customer_phone: payload.customerPhone.trim(),
       service_id: service?.id || null,
@@ -172,20 +171,16 @@ export async function submitServiceRequest(payload: SubmitRequestPayload): Promi
       additional_notes: payload.additionalNotes?.trim() || null,
     };
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('service_bookings')
-      .insert(insertPayload)
-      .select('*')
-      .single();
+      .insert(insertPayload);
 
     if (error) throw error;
 
-    const booking = mapBooking(data as BookingRow);
     return {
       success: true,
-      refCode: booking.refCode,
+      refCode,
       message: 'Request received — our team will contact you shortly to confirm details and visit schedule.',
-      data: booking,
     };
   } catch (error) {
     console.error('Supabase booking submission failed:', error);
@@ -197,7 +192,7 @@ export async function submitServiceRequest(payload: SubmitRequestPayload): Promi
   }
 }
 
-// 2. Admin inbox. Supabase RLS only permits assigned admins to read booking records.
+// Admin inbox. Supabase RLS only permits assigned admins to read booking records.
 export async function fetchAdminRequests(status = 'all', search = ''): Promise<{
   success: boolean;
   data: ServiceRequest[];
@@ -213,7 +208,6 @@ export async function fetchAdminRequests(status = 'all', search = ''): Promise<{
     if (error) throw error;
 
     let items = ((data || []) as BookingRow[]).map(mapBooking);
-    // Merge browser-local offline submissions without duplicating database records.
     const localItems = localRequests();
     const remoteIds = new Set(items.map((item) => item.id));
     items = [...localItems.filter((item) => !remoteIds.has(item.id)), ...items];
@@ -250,7 +244,7 @@ export async function fetchAdminRequests(status = 'all', search = ''): Promise<{
   }
 }
 
-// 3. Update booking status through the admin-only database function.
+// Update booking status through the admin-only database function.
 export async function updateRequestStatus(
   id: string,
   newStatus: string,
@@ -283,7 +277,7 @@ export async function updateRequestStatus(
   }
 }
 
-// 4. Add an internal note through the admin-only database function.
+// Add an internal note through the admin-only database function.
 export async function addRequestNote(
   id: string,
   note: string,
@@ -302,7 +296,7 @@ export async function addRequestNote(
   }
 }
 
-// 5. AI diagnosis. The public hosting target may not run the original Express server,
+// AI diagnosis. The public hosting target may not run the original Express server,
 // so a deterministic technician guidance fallback remains available when that API is absent.
 export async function requestAIDiagnosis(payload: DiagnosePayload): Promise<{
   success: boolean;
@@ -345,7 +339,7 @@ export async function requestAIDiagnosis(payload: DiagnosePayload): Promise<{
   }
 }
 
-// 6. Read site settings from the public settings row. RLS only permits admins to update it.
+// Read site settings from the public settings row. RLS only permits admins to update it.
 export async function fetchSiteSettings(): Promise<SiteSettings> {
   try {
     const { data, error } = await supabase
