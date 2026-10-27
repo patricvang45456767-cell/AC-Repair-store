@@ -1,5 +1,6 @@
 import { ServiceRequest, SiteSettings } from '../types';
 import { initialSiteSettings } from '../data/mockData';
+import { supabase } from './supabase';
 
 export interface SubmitRequestPayload {
   customerName: string;
@@ -24,6 +25,13 @@ export interface DiagnosePayload {
   brand?: string;
   roomSize?: string;
   notes?: string;
+}
+
+async function getAdminAuthHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token
+    ? { Authorization: `Bearer ${session.access_token}` }
+    : {};
 }
 
 // 1. Submit Service Request
@@ -101,7 +109,8 @@ export async function fetchAdminRequests(status = 'all', search = ''): Promise<{
     if (status !== 'all') params.append('status', status);
     if (search) params.append('search', search);
 
-    const res = await fetch(`/api/requests?${params.toString()}`);
+    const headers = await getAdminAuthHeaders();
+    const res = await fetch(`/api/requests?${params.toString()}`, { headers });
     if (!res.ok) throw new Error('Failed to load requests');
     const result = await res.json();
 
@@ -144,9 +153,10 @@ export async function updateRequestStatus(
   authorNote?: string
 ): Promise<{ success: boolean; data?: ServiceRequest }> {
   try {
+    const authHeaders = await getAdminAuthHeaders();
     const res = await fetch(`/api/requests/${id}/status`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify({ newStatus, authorNote }),
     });
     if (!res.ok) throw new Error('Failed to update status');
@@ -182,9 +192,10 @@ export async function addRequestNote(
   author = 'Admin'
 ): Promise<{ success: boolean; data?: any }> {
   try {
+    const authHeaders = await getAdminAuthHeaders();
     const res = await fetch(`/api/requests/${id}/notes`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify({ note, author }),
     });
     if (!res.ok) throw new Error('Failed to add note');
@@ -251,9 +262,10 @@ export async function fetchSiteSettings(): Promise<SiteSettings> {
 
 export async function saveSiteSettings(settings: SiteSettings): Promise<boolean> {
   try {
+    const authHeaders = await getAdminAuthHeaders();
     const res = await fetch('/api/settings', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify(settings),
     });
     return res.ok;

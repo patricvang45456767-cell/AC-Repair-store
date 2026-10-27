@@ -26,6 +26,7 @@ import {
 import { ServiceRequest, SiteSettings } from '../../types';
 import { fetchAdminRequests, updateRequestStatus, addRequestNote, saveSiteSettings } from '../../lib/api';
 import { formatDate, timeAgo, getStatusDetails, createTelUrl, createWhatsAppUrl } from '../../lib/utils';
+import { supabase } from '../../lib/supabase';
 
 interface AdminDashboardProps {
   isOpen: boolean;
@@ -42,9 +43,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 }) => {
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [email, setEmail] = useState('admin@abcaircare.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
 
   // Dashboard state
   const [activeTab, setActiveTab] = useState<'requests' | 'settings'>('requests');
@@ -102,15 +104,81 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   }, [isAuthenticated, isOpen, statusFilter, searchQuery]);
 
+  // Restore only an authenticated Supabase session that is still assigned admin access.
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+
+    const restoreSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        if (!cancelled) setIsAuthenticated(false);
+        return;
+      }
+
+      const { data: isAdmin, error } = await supabase.rpc('is_current_user_admin');
+      if (cancelled) return;
+      if (!error && isAdmin === true) {
+        setIsAuthenticated(true);
+      } else {
+        await supabase.auth.signOut();
+        setIsAuthenticated(false);
+      }
+    };
+
+    void restoreSession();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'admin123' || password.length >= 4) {
+    if (authLoading) return;
+
+    setAuthLoading(true);
+    setLoginError('');
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (signInError) {
+        setLoginError('Email ya password ghalat hai.');
+        return;
+      }
+
+      const { data: isAdmin, error: permissionError } = await supabase.rpc('is_current_user_admin');
+      if (permissionError || isAdmin !== true) {
+        await supabase.auth.signOut();
+        setLoginError('Is account ko admin access nahi diya gaya.');
+        return;
+      }
+
       setIsAuthenticated(true);
+      setPassword('');
+    } catch {
+      setLoginError('Login abhi nahi ho saka. Dobara koshish karein.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      setIsAuthenticated(false);
+      setRequests([]);
+      setCounts({});
+      setSelectedRequest(null);
+      setActiveTab('requests');
+      setEmail('');
+      setPassword('');
       setLoginError('');
-    } else {
-      setLoginError('Invalid credentials. (Hint: Use password "admin123" for testing)');
     }
   };
 
@@ -199,6 +267,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <SettingsIcon className="w-3.5 h-3.5" />
                   <span>Shop Settings</span>
                 </button>
+                <button
+                  onClick={() => void handleLogout()}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 bg-slate-800 text-slate-300 hover:text-white"
+                  title="Sign out of admin panel"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Sign Out</span>
+                </button>
               </div>
             )}
 
@@ -237,6 +313,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <label className="block text-xs font-bold text-slate-300 mb-1">Email Address</label>
                   <input
                     type="email"
+                    required
+                    autoComplete="username"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500"
@@ -247,32 +325,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <label className="block text-xs font-bold text-slate-300 mb-1">Password</label>
                   <input
                     type="password"
+                    required
+                    autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500"
                   />
                 </div>
 
-                <div className="p-2.5 bg-slate-900/60 rounded-xl border border-slate-700/60 text-[11px] text-slate-400 flex items-center justify-between">
-                  <span>Demo access credentials ready</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEmail('admin@apexaircare.com');
-                      setPassword('admin123');
-                      setIsAuthenticated(true);
-                    }}
-                    className="text-cyan-400 font-bold hover:underline cursor-pointer"
-                  >
-                    1-Click Demo Login
-                  </button>
-                </div>
-
                 <button
                   type="submit"
-                  className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-sm transition-all shadow-md cursor-pointer"
+                  disabled={authLoading}
+                  className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-sm transition-all shadow-md cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Sign In to Dashboard
+                  {authLoading ? 'Signing In…' : 'Sign In to Dashboard'}
                 </button>
               </form>
             </div>
