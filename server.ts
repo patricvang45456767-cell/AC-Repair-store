@@ -1,4 +1,5 @@
 import express from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -13,6 +14,61 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+
+const SUPABASE_URL = (
+  process.env.SUPABASE_URL ||
+  process.env.VITE_SUPABASE_URL ||
+  'https://ecegktmycedzwmayseai.supabase.co'
+).replace(/\/+$/, '');
+const SUPABASE_PUBLISHABLE_KEY =
+  process.env.SUPABASE_PUBLISHABLE_KEY ||
+  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  'sb_publishable_djWqIu1rgXIebI8aSZePXQ_Gjq79kwi';
+
+// Validate both the Supabase session and its server-side admin assignment.
+// A client-side login alone is never sufficient to access administrative APIs.
+async function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  const token = req.get('authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
+  if (!token) {
+    return res.status(401).json({ error: 'Authentication required.' });
+  }
+
+  try {
+    const userResponse = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: {
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!userResponse.ok) {
+      return res.status(401).json({ error: 'Session is invalid or expired.' });
+    }
+
+    const adminResponse = await fetch(`${SUPABASE_URL}/rest/v1/rpc/is_current_user_admin`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: '{}',
+    });
+    if (!adminResponse.ok) {
+      console.error('Supabase admin permission check failed:', adminResponse.status);
+      return res.status(503).json({ error: 'Unable to verify admin permissions.' });
+    }
+
+    const isAdmin: unknown = await adminResponse.json();
+    if (isAdmin !== true) {
+      return res.status(403).json({ error: 'Admin access required.' });
+    }
+
+    return next();
+  } catch (error) {
+    console.error('Admin authentication check failed:', error);
+    return res.status(503).json({ error: 'Unable to verify admin permissions.' });
+  }
+}
 
 // Initialize Google GenAI on the server side
 const ai = new GoogleGenAI({
@@ -289,7 +345,7 @@ Please provide a concise technical diagnostic breakdown.`;
 });
 
 // 2. Service Requests - Get All (Admin)
-app.get('/api/requests', (req, res) => {
+app.get('/api/requests', requireAdmin, (req, res) => {
   const { status, search } = req.query;
   let filtered = [...serviceRequests];
 
@@ -418,7 +474,7 @@ app.post('/api/requests', (req, res) => {
 });
 
 // 4. Update Request Status (Admin)
-app.patch('/api/requests/:id/status', (req, res) => {
+app.patch('/api/requests/:id/status', requireAdmin, (req, res) => {
   const { id } = req.params;
   const { newStatus, authorNote } = req.body;
 
@@ -463,7 +519,7 @@ app.patch('/api/requests/:id/status', (req, res) => {
 });
 
 // 5. Add Internal Technician Note (Admin)
-app.post('/api/requests/:id/notes', (req, res) => {
+app.post('/api/requests/:id/notes', requireAdmin, (req, res) => {
   const { id } = req.params;
   const { note, author } = req.body;
 
@@ -494,7 +550,7 @@ app.get('/api/settings', (req, res) => {
   res.json({ success: true, data: siteSettings });
 });
 
-app.put('/api/settings', (req, res) => {
+app.put('/api/settings', requireAdmin, (req, res) => {
   const updates = req.body;
   siteSettings = {
     ...siteSettings,
