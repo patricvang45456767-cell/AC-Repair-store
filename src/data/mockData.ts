@@ -9,7 +9,7 @@ export const initialSiteSettings: SiteSettings = {
   whatsappE164: '+923463902834',
   whatsappPrefill: 'Assalam o Alaikum ABC Air Care, mujhe AC service ya repair k baray me rabta krna hai.',
   email: 'service@abcaircare.com',
-  address: 'Shop 14, Commercial Center, Main Boulevard, Lahore',
+  address: '20 Wala Adda Near ALMAKKAH Hotel Sadiqabad',
   showAddress: true,
   openingHours: 'Mon - Sun: 8:00 AM - 9:30 PM (Emergency breakdown hotline active)',
   pricePolicy: 'Honest, inspection-based estimates. A standard nominal visit fee applies, which is 100% credited into your final invoice upon approved service.',
