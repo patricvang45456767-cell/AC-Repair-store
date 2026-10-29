@@ -191,9 +191,9 @@ export const translations: Record<Language, TranslationStrings> = {
     // Coverage
     coverageBadge: 'Service Areas',
     coverageTitle: 'Aapke Ilqay Me Mobile Service Fleet',
-    coverageSubtitle: 'DHA, Gulberg, Johar Town, Bahria Town, Model Town aur Cantt k tamam sectors me rapid response dispatch.',
-    coverageSearchPlaceholder: 'Apna area ya town search karein (e.g. DHA, Gulberg, Johar Town)...',
-    coverageResponseTime: 'Pohanchne Ka Time: 60 - 90 Minutes',
+    coverageSubtitle: 'Sadiqabad ke 20 Wala Adda, Main Bazaar, Railway Road aur qareebi residential ilaqon mein service availability.',
+    coverageSearchPlaceholder: 'Apna ilaqa search karein (e.g. 20 Wala Adda, Railway Road, Arain Colony)...',
+    coverageResponseTime: 'Visit ka waqt call/WhatsApp par confirm hoga',
 
     // Contact
     contactBadge: 'Direct Rabta',
@@ -303,9 +303,9 @@ export const translations: Record<Language, TranslationStrings> = {
     // Coverage
     coverageBadge: 'Service Coverage Areas',
     coverageTitle: 'Fast Mobile Technician Fleet Near You',
-    coverageSubtitle: 'Operating dedicated mobile service vans stocked with nitrogen cylinders and inverter test kits across prime sectors.',
-    coverageSearchPlaceholder: 'Search your town, sector or phase (e.g. DHA, Gulberg, Johar Town)...',
-    coverageResponseTime: 'Response Time: 60 - 90 Minutes',
+    coverageSubtitle: 'Based at 20 Wala Adda near Al Makkah Hotel, Sadiqabad. Confirm area availability and visit time by phone or WhatsApp.',
+    coverageSearchPlaceholder: 'Search your area (e.g. 20 Wala Adda, Railway Road, Arain Colony)...',
+    coverageResponseTime: 'Visit time confirmed by phone or WhatsApp',
 
     // Contact
     contactBadge: 'Direct Reach',
