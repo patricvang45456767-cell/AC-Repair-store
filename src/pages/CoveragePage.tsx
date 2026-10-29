@@ -24,18 +24,11 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({ settings, language, 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
 
-  const zones = [
-    { name: 'DHA Phase 1 to 9 & Raya', eta: '45 - 60 mins', status: 'Priority Hub', vans: 3 },
-    { name: 'Gulberg (I, II, III, IV, V)', eta: '40 - 55 mins', status: 'Central Hub', vans: 2 },
-    { name: 'Johar Town & PIA Society', eta: '45 - 60 mins', status: 'Active Van', vans: 2 },
-    { name: 'Cantt, Cavalry & Falcon Complex', eta: '45 - 60 mins', status: 'Active Van', vans: 2 },
-    { name: 'Model Town & Garden Town', eta: '40 - 50 mins', status: 'Active Van', vans: 2 },
-    { name: 'Bahria Town & Canal Gardens', eta: '60 - 80 mins', status: 'Southern Hub', vans: 2 },
-    { name: 'WAPDA Town & PCSIR', eta: '50 - 65 mins', status: 'Active Van', vans: 1 },
-    { name: 'Faisal Town & Township', eta: '45 - 60 mins', status: 'Active Van', vans: 1 },
-    { name: 'Valencia, Lake City & Bahria Orchard', eta: '60 - 75 mins', status: 'Active Van', vans: 1 },
-    { name: 'Askari (1 through 11)', eta: '50 - 65 mins', status: 'Active Van', vans: 1 },
-  ];
+  const zones = settings.serviceAreas.map((name) => ({
+    name,
+    eta: language === 'roman' ? 'Booking par confirm' : 'Confirm on booking',
+    status: language === 'roman' ? 'Sadiqabad area' : 'Sadiqabad area',
+  }));
 
   const filteredZones = zones.filter((z) =>
     z.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -56,8 +49,8 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({ settings, language, 
           </h1>
           <p className="mt-3 text-slate-600 text-sm sm:text-base leading-relaxed">
             {language === 'roman'
-              ? 'Hamari mobile vans pure Lahore k ahem ilqon me har waqt digital tools aur spare parts k sath active rehti hain.'
-              : 'Our fleet of mobile service vans are stocked with nitrogen cylinders, copper lines, and inverter motherboards across prime Lahore sectors.'}
+              ? 'ABC Air Care ka pata 20 Wala Adda, Al Makkah Hotel ke qareeb, Sadiqabad hai. Visit ka waqt call ya WhatsApp par confirm hota hai.'
+              : 'ABC Air Care is based at 20 Wala Adda near Al Makkah Hotel, Sadiqabad. Visit times are confirmed by phone or WhatsApp.'}
           </p>
         </div>
 
@@ -71,22 +64,22 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({ settings, language, 
                 <Truck className="w-6 h-6" />
               </div>
               <h3 className="font-extrabold text-xl text-slate-900 font-display">
-                {language === 'roman' ? 'Mobile Fleet Dispatch System' : 'Dedicated Mobile Van Fleet'}
+                {language === 'roman' ? 'Sadiqabad Mein AC Service' : 'AC Service in Sadiqabad'}
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                 {language === 'roman'
-                  ? 'Aam technicians ki tarah hum motor cycle par chhota sa bag lekar nahi aate. Hamari dedicated mobile van me complete high-pressure jet pump, 350 PSI dry nitrogen, digital vacuum pump aur leak sniffers rehte hain.'
-                  : 'Unlike informal workers on motorbikes, our certified vans carry complete industrial jet pumps, dual-stage vacuum stations, dry nitrogen, and factory copper line kits.'}
+                  ? 'Appointment confirm hone ke baad technician aapke AC ke maslay ke mutabiq zaroori tools ke sath visit karega.'
+                  : 'After your appointment is confirmed, a technician will visit with tools appropriate for the AC service you requested.'}
               </p>
 
               <div className="pt-2 border-t border-slate-100 space-y-2 text-xs text-slate-700">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>{language === 'roman' ? 'Average Arrival Time: 45 - 75 Minutes' : 'Average Response Time: 45 - 75 Mins'}</span>
+                  <span>{language === 'roman' ? 'Visit ka waqt booking par confirm hoga' : 'Visit time confirmed on booking'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>{language === 'roman' ? 'Emergency Night Support for Server Rooms' : 'Emergency Priority Support for Sensitive Sites'}</span>
+                  <span>{language === 'roman' ? 'Call ya WhatsApp par visit confirm karein' : 'Confirm your visit by call or WhatsApp'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -114,7 +107,7 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({ settings, language, 
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search town, sector, or phase (e.g. DHA, Gulberg, Johar Town)..."
+                placeholder="Search area (e.g. 20 Wala Adda, Railway Road, Arain Colony)..."
                 className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-cyan-600"
               />
             </div>
@@ -142,9 +135,9 @@ export const CoveragePage: React.FC<CoveragePageProps> = ({ settings, language, 
                   <div className={`flex items-center justify-between text-[11px] ${selectedArea === z.name ? 'text-cyan-100' : 'text-slate-500'}`}>
                     <span className="flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5" />
-                      <span>ETA: {z.eta}</span>
+                      <span>{language === 'roman' ? 'Visit: ' : 'Visit: '}{z.eta}</span>
                     </span>
-                    <span>{z.vans} Active Vans</span>
+                    <span>{language === 'roman' ? 'Call par confirm' : 'Confirm by phone'}</span>
                   </div>
                 </div>
               ))}
