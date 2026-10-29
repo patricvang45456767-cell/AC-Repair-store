@@ -32,8 +32,22 @@ export default function App() {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingServiceId, setBookingServiceId] = useState<string>('');
   const [bookingInitialNotes, setBookingInitialNotes] = useState<string>('');
-  const [adminOpen, setAdminOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(() => window.location.pathname.replace(/\/+$/, '') === '/admin');
   const [presetSymptom, setPresetSymptom] = useState<string>('');
+
+  // Open the protected admin portal directly at /admin and support browser navigation.
+  useEffect(() => {
+    const syncAdminRoute = () => setAdminOpen(window.location.pathname.replace(/\/+$/, '') === '/admin');
+    window.addEventListener('popstate', syncAdminRoute);
+    return () => window.removeEventListener('popstate', syncAdminRoute);
+  }, []);
+
+  const closeAdmin = () => {
+    setAdminOpen(false);
+    if (window.location.pathname.replace(/\/+$/, '') === '/admin') {
+      window.history.pushState({}, '', '/');
+    }
+  };
 
   // Synchronize hash with page state for deep-linking and browser navigation
   useEffect(() => {
@@ -92,7 +106,6 @@ export default function App() {
         onNavigate={handleNavigate}
         onToggleLanguage={setLanguage}
         onOpenBooking={() => handleOpenBooking()}
-        onOpenAdmin={() => setAdminOpen(true)}
       />
 
       {/* Main Multi-Page Route Render with Page Entrance Animation */}
@@ -176,7 +189,6 @@ export default function App() {
         settings={settings}
         language={language}
         onOpenBooking={() => handleOpenBooking()}
-        onOpenAdmin={() => setAdminOpen(true)}
       />
 
       {/* Floating Bottom Bar for Mobile Visitors */}
@@ -202,7 +214,7 @@ export default function App() {
       {/* Admin Portal Modal */}
       <AdminDashboard
         isOpen={adminOpen}
-        onClose={() => setAdminOpen(false)}
+        onClose={closeAdmin}
         settings={settings}
         onUpdateSettings={(newSet) => setSettings(newSet)}
       />

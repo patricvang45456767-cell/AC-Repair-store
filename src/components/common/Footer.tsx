@@ -1,5 +1,5 @@
 import React from 'react';
-import { Phone, MessageSquare, Shield, Wrench, Heart, ArrowUp } from 'lucide-react';
+import { Phone, MessageSquare, Wrench, Heart, ArrowUp } from 'lucide-react';
 import { SiteSettings } from '../../types';
 import { Language } from '../../data/translations';
 import { createTelUrl, createWhatsAppUrl } from '../../lib/utils';
@@ -8,10 +8,9 @@ interface FooterProps {
   settings: SiteSettings;
   language: Language;
   onOpenBooking: () => void;
-  onOpenAdmin: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ settings, language, onOpenBooking, onOpenAdmin }) => {
+export const Footer: React.FC<FooterProps> = ({ settings, language, onOpenBooking }) => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -102,14 +101,6 @@ export const Footer: React.FC<FooterProps> = ({ settings, language, onOpenBookin
               <div>
                 <span className="text-slate-500 block">Email:</span>
                 <span className="text-slate-300">{settings.email}</span>
-              </div>
-              <div className="pt-2">
-                <button
-                  onClick={onOpenAdmin}
-                  className="text-[11px] text-slate-500 hover:text-slate-300 underline"
-                >
-                  Dispatcher / Admin Portal
-                </button>
               </div>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Phone, MessageSquare, Menu, X, ShieldCheck, Wrench, Shield, ChevronRight, Sparkles, Globe, Home, Box } from 'lucide-react';
+import { Phone, MessageSquare, Menu, X, Wrench, ChevronRight, Sparkles, Globe, Home, Box } from 'lucide-react';
 import { SiteSettings } from '../../types';
 import { Language, translations } from '../../data/translations';
 import { createTelUrl, createWhatsAppUrl } from '../../lib/utils';
@@ -13,7 +13,6 @@ interface HeaderProps {
   onNavigate: (page: PageId) => void;
   onToggleLanguage: (lang: Language) => void;
   onOpenBooking: (serviceId?: string) => void;
-  onOpenAdmin: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -23,7 +22,6 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigate,
   onToggleLanguage,
   onOpenBooking,
-  onOpenAdmin,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -102,14 +100,6 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               </div>
 
-              <button
-                onClick={onOpenAdmin}
-                className="text-slate-400 hover:text-slate-200 transition-colors flex items-center gap-1 border-l border-slate-700 pl-3 cursor-pointer"
-                title="Technician / Admin Portal"
-              >
-                <Shield className="w-3 h-3 text-cyan-400" />
-                <span className="hidden md:inline">{t.adminPortal}</span>
-              </button>
             </div>
           </div>
         </div>
@@ -337,16 +327,6 @@ export const Header: React.FC<HeaderProps> = ({
                 </a>
               </div>
 
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenAdmin();
-                }}
-                className="py-2 text-center text-xs text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1 cursor-pointer"
-              >
-                <Shield className="w-3.5 h-3.5 text-cyan-500" />
-                <span>{t.adminPortal}</span>
-              </button>
             </div>
           </div>
         </div>
