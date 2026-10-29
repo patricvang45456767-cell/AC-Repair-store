@@ -161,15 +161,15 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ settings, langua
                     <MapPin className="w-4 h-4" />
                   </div>
                   <span className="mt-2 text-[10px] font-bold text-cyan-300 bg-slate-900/90 px-2 py-0.5 rounded border border-cyan-800">
-                    ABC Hub • Central Lahore
+                    ABC Air Care • Sadiqabad
                   </span>
                 </div>
               </div>
 
               <div className="space-y-2 text-xs text-slate-300">
-                <div className="font-bold text-white">Central Hub & Mobile Service Fleet</div>
+                <div className="font-bold text-white">Sadiqabad Service Location</div>
                 <p className="text-slate-400">
-                  Covering all phases of DHA, Gulberg, Johar Town, Bahria Town, Model Town & Cantt.
+                  Serving 20 Wala Adda, Main Bazaar, Railway Road and nearby Sadiqabad localities. Confirm availability when booking.
                 </p>
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(settings.address)}`}
