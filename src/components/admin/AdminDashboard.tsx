@@ -223,8 +223,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex flex-col justify-end sm:justify-center p-0 sm:p-4 overflow-hidden">
-      <div className="bg-slate-900 text-white w-full max-w-6xl mx-auto h-[100dvh] sm:h-[92vh] rounded-none sm:rounded-2xl border border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in fade-in duration-200">
+    <div className="min-h-screen w-full bg-slate-950 text-white flex flex-col overflow-hidden">
+      <div className="bg-slate-900 text-white w-full min-h-screen border-0 shadow-none flex flex-col overflow-hidden">
         
         {/* Top Navbar */}
         <div className="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
