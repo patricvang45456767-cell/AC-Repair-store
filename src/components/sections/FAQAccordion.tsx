@@ -47,7 +47,7 @@ export const FAQAccordion: React.FC<FAQAccordionProps> = ({ settings, language }
     {
       id: 'faq-6',
       question: 'Technician kitni der me mere ghar/office pohanch sakta hai?',
-      answer: 'DHA, Gulberg, Johar Town, Bahria Town, Cantt aur Model Town me hamari mobile vans rehti hain. Call ya online booking k baad aam tor par 60 se 90 minutes me technician pohanch jata hai.',
+      answer: 'Hamari service Sadiqabad mein 20 Wala Adda, Main Bazaar, Railway Road aur qareebi ilaqon ke liye hai. Visit ka exact waqt call ya WhatsApp par confirm hota hai.',
     },
   ];
 
