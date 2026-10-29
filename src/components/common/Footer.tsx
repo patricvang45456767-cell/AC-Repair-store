@@ -33,7 +33,7 @@ export const Footer: React.FC<FooterProps> = ({ settings, language, onOpenBookin
             </div>
             <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
               {language === 'roman'
-                ? 'Certified AC repair, high-pressure jet wash, Inverter motherboard diagnostics aur genuine gas leak testing. Lahore k tamam prime areas me rapid technician dispatch.'
+                ? 'Certified AC repair, high-pressure jet wash, inverter motherboard diagnostics aur genuine gas leak testing. Sadiqabad aur qareebi ilaqon mein service availability booking par confirm hoti hai.'
                 : 'Professional residential and commercial air conditioning repair, high-pressure jet washing, inverter motherboard diagnostics, and precision refrigerant leak testing.'}
             </p>
             <div className="pt-2 text-xs text-slate-500">
