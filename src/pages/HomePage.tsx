@@ -595,7 +595,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                   </h4>
                   <p className="text-xs text-slate-600 leading-relaxed">
                     {language === 'roman'
-                      ? 'DHA, Gulberg, Johar Town, Bahria Town aur Cantt me priority mobile vans dastiab hain.'
+                      ? 'Sadiqabad mein 20 Wala Adda aur qareebi ilaqon ke liye AC service booking karein. Visit ka waqt call ya WhatsApp par confirm hota hai.'
                       : 'Dedicated mobile vans stocked with nitrogen, copper lines, and inverter boards ready to roll.'}
                   </p>
                 </div>
