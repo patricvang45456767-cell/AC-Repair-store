@@ -318,7 +318,7 @@ export const BookServiceModal: React.FC<BookServiceModalProps> = ({
                     type="text"
                     value={customArea}
                     onChange={(e) => setCustomArea(e.target.value)}
-                    placeholder="e.g. Wapda Town Phase 2, Bahria Orchard..."
+                    placeholder="e.g. 20 Wala Adda, Railway Road, Arain Colony..."
                     className="w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-slate-900 focus:outline-none focus:border-cyan-600"
                   />
                 </div>
