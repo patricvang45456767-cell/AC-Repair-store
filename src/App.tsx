@@ -93,6 +93,19 @@ export default function App() {
     handleOpenBooking(serviceId, problemDetails);
   };
 
+  if (adminOpen) {
+    return (
+      <div className="min-h-screen w-full bg-slate-950">
+        <AdminDashboard
+          isOpen={true}
+          onClose={closeAdmin}
+          settings={settings}
+          onUpdateSettings={(newSet) => setSettings(newSet)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-cyan-500 selection:text-white pb-16 sm:pb-0">
       {/* Scroll-Driven Dynamic Progress Bar */}
@@ -211,13 +224,6 @@ export default function App() {
         settings={settings}
       />
 
-      {/* Admin Portal Modal */}
-      <AdminDashboard
-        isOpen={adminOpen}
-        onClose={closeAdmin}
-        settings={settings}
-        onUpdateSettings={(newSet) => setSettings(newSet)}
-      />
     </div>
   );
 }
